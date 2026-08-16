@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    background-color: #f7f9fc;
+    font-family: 'Segoe UI', 'Segoe UI Semibold', system-ui, -apple-system,
+      Roboto, 'Helvetica Neue', Arial, 'Apple Color Emoji', 'Segoe UI Emoji',
+      'Segoe UI Symbol', sans-serif;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition;
+  }
+  .btn-primary {
+    @apply btn bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800 disabled:bg-brand-300;
+  }
+  .btn-ghost {
+    @apply btn bg-white text-ink-800 border border-ink-100 hover:bg-ink-100/60;
+  }
+  .btn-soft {
+    @apply btn bg-brand-50 text-brand-700 hover:bg-brand-100;
+  }
+  .btn-view-detail {
+    @apply inline-flex items-center gap-1.5 rounded-full
+           bg-gradient-to-r from-brand-600 to-brand-700
+           px-4 py-2 text-xs font-semibold text-white
+           shadow-sm shadow-brand-600/20
+           transition-all duration-200 ease-out
+           hover:from-brand-700 hover:to-brand-800
+           hover:shadow-md hover:shadow-brand-600/30
+           hover:-translate-y-0.5 hover:gap-2.5
+           active:translate-y-0 active:shadow-sm
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300;
+  }
+  .btn-view-detail .arrow {
+    transition: transform 200ms ease-out;
+  }
+  .btn-view-detail:hover .arrow {
+    transform: translateX(2px);
+  }
+  .btn-danger {
+    @apply btn bg-rose-50 text-rose-700 hover:bg-rose-100;
+  }
+  .input {
+    @apply w-full rounded-xl border border-ink-100 bg-white px-3.5 py-2.5 text-sm text-ink-900 shadow-sm placeholder:text-ink-300 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-ink-700;
+  }
+  .card {
+    @apply rounded-2xl bg-white shadow-card;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700;
+  }
+  .badge-success {
+    @apply badge bg-emerald-50 text-emerald-700;
+  }
+  .badge-warning {
+    @apply badge bg-amber-50 text-amber-700;
+  }
+  .badge-muted {
+    @apply badge bg-slate-100 text-slate-600;
+  }
+  .tabs-pill {
+    @apply inline-flex items-center gap-1 rounded-full bg-white p-1 shadow-card;
+  }
+  .tab-pill {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5
+           text-xs font-medium text-ink-500
+           transition-all duration-150
+           hover:text-ink-700 hover:bg-ink-100/60;
+  }
+  .tab-pill-active {
+    @apply bg-gradient-to-r from-brand-600 to-brand-700 text-white shadow-sm
+           hover:from-brand-700 hover:to-brand-800 hover:bg-gradient-to-r hover:text-white;
+  }
+  .tab-pill-count {
+    @apply inline-flex items-center justify-center rounded-full
+           bg-white/20 px-1.5 py-0.5 text-[10px] font-semibold
+           text-current;
+  }
+  .tab-pill:not(.tab-pill-active) .tab-pill-count {
+    @apply bg-ink-100 text-ink-500;
+  }
+}
