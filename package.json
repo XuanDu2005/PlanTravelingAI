@@ -1,0 +1,23 @@
+{
+  "name": "travelmind",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TravelMind - AI-powered travel itinerary planner (MVP)",
+  "scripts": {
+    "dev:api": "pnpm --filter @travelmind/api start:dev",
+    "dev:web": "pnpm --filter @travelmind/web dev",
+    "build:api": "pnpm --filter @travelmind/api build",
+    "build:web": "pnpm --filter @travelmind/web build",
+    "typecheck": "pnpm -r run typecheck",
+    "lint": "pnpm -r run lint",
+    "prisma:generate": "pnpm --filter @travelmind/api prisma:generate",
+    "prisma:migrate": "pnpm --filter @travelmind/api prisma:migrate",
+    "prisma:seed": "pnpm --filter @travelmind/api prisma:seed",
+    "docker:up": "docker compose -f docker/docker-compose.yml up --build",
+    "docker:down": "docker compose -f docker/docker-compose.yml down"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@9.0.0"
+}

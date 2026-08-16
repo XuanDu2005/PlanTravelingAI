@@ -1,0 +1,34 @@
+# Exclude paths from the Docker build context (keeps images small and reproducible).
+
+# Hosts / VCS
+.git/
+.gitignore
+
+# Docs (no need inside the image)
+docs/
+
+# Local scripts / IDE
+.vscode/
+.idea/
+.cursor/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Build artifacts / dependencies of the host machine
+**/node_modules/
+**/dist/
+**/build/
+**/.next/
+**/.tmp/
+apps/api/prisma/migrations/dev_*/
+.docker-data/
+
+# Logs
+logs/
+*.log
