@@ -5,8 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <title>TravelMind - Lên kế hoạch du lịch bằng AI</title>
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('tm-theme');
+          var prefersDark =
+            window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var theme = stored === 'light' || stored === 'dark'
+            ? stored
+            : prefersDark
+              ? 'dark'
+              : 'light';
+          if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+          }
+          document.documentElement.style.colorScheme = theme;
+        } catch (e) {}
+      })();
+    </script>
   </head>
-  <body class="bg-slate-50 font-sans text-ink-900 antialiased">
+  <body class="bg-slate-50 font-sans text-ink-900 antialiased transition-colors duration-200 dark:bg-surface-300 dark:text-slate-100">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
