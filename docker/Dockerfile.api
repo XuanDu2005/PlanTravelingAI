@@ -1,0 +1,62 @@
+# ---- Stage 1: deps + build ----
+FROM node:20-bookworm-slim AS builder
+WORKDIR /app
+
+# Prisma 5 engine requires libssl 1.1 (or the bookworm equivalent). Install it
+# explicitly so `prisma generate` / `prisma migrate` do not fail with the
+# cryptic "Schema engine error:" we saw when libssl was missing.
+RUN apt-get update -y \
+ && apt-get install -y --no-install-recommends openssl ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN corepack enable
+
+# Copy only what is needed to resolve the workspace first
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* ./
+COPY apps/api/package.json apps/api/
+COPY apps/web/package.json apps/web/
+
+# Install all workspace deps including dev (we need nest CLI + prisma to build)
+# --frozen-lockfile ensures we use the committed lockfile (no surprise upgrades).
+RUN pnpm install --frozen-lockfile
+
+# Bring the rest of the source so Prisma can read schema.prisma and nest can build
+COPY apps/api ./apps/api
+
+# Generate Prisma client using the workspace-pinned CLI (not a globally fetched one)
+WORKDIR /app/apps/api
+RUN pnpm exec prisma generate \
+ && rm -rf dist tsconfig.tsbuildinfo \
+ && pnpm build 2>&1 | tail -60
+
+# Also compile the seed script to JS so it can run without ts-node in the runtime image
+# (the runner stage does not include devDependencies by default).
+RUN ./node_modules/.bin/tsc --outDir dist-seed --target es2020 --module commonjs \
+   --esModuleInterop --skipLibCheck --resolveJsonModule --strict false \
+   --rootDir . prisma/seed.ts 2>&1 | tail -5
+
+# ---- Stage 2: runtime ----
+FROM node:20-bookworm-slim AS runner
+WORKDIR /app
+ENV NODE_ENV=production \
+    PORT=3000
+
+# Same libssl requirement as builder so the runtime prisma engine works.
+RUN apt-get update -y \
+ && apt-get install -y --no-install-recommends openssl ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN corepack enable
+
+# Bring everything from the builder — builder already ran pnpm install with dev
+# deps and `pnpm build`, so we can reuse the whole workspace node_modules and
+# the compiled `dist` output. No second install needed here.
+COPY --from=builder /app /app
+
+WORKDIR /app/apps/api
+
+# Run migrations against DATABASE_URL, then optionally seed admin/recommendations,
+# then start the app. Use the locally installed `prisma` binary - no `npx --yes`
+# which would silently fetch the latest global Prisma (currently v7 with breaking
+# schema syntax).
+CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy --schema=prisma/schema.prisma && if [ \"$SEED_ON_BOOT\" = \"true\" ]; then ./node_modules/.bin/prisma db seed --schema=prisma/schema.prisma || true; fi && node dist/main.js"]
