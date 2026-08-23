@@ -1,5 +1,9 @@
+import { ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { AuthProvider } from './store/AuthContext';
+import { AuthProvider, useAuth } from './store/AuthContext';
+import { ThemeProvider } from './store/ThemeContext';
+import { ConfirmProvider } from './components/ConfirmProvider';
+import { FavoritesProvider } from './store/FavoritesProvider';
 import MainLayout from './layouts/MainLayout';
 import AdminLayout from './layouts/AdminLayout';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -19,11 +23,15 @@ import AdminRecommendationFormPage from './admin/Recommendations/AdminRecommenda
 import AdminTripsPage from './admin/Trips/AdminTripsPage';
 import AdminAnalyticsPage from './admin/Analytics/AdminAnalyticsPage';
 import AdminSettingsPage from './admin/Settings/AdminSettingsPage';
+import AdminHeroPage from './admin/Hero/AdminHeroPage';
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Routes>
+    <ThemeProvider>
+      <AuthProvider>
+        <ConfirmProvider>
+          <FavoritesGate>
+          <Routes>
         {/* Public site */}
         <Route element={<MainLayout />}>
           <Route index element={<HomePage />} />
@@ -67,10 +75,21 @@ export default function App() {
           />
           <Route path="analytics" element={<AdminAnalyticsPage />} />
           <Route path="settings" element={<AdminSettingsPage />} />
+          <Route path="hero" element={<AdminHeroPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </AuthProvider>
+        </Routes>
+        </FavoritesGate>
+        </ConfirmProvider>
+      </AuthProvider>
+    </ThemeProvider>
+  );
+}
+
+function FavoritesGate({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  return (
+    <FavoritesProvider enabled={!!user}>{children}</FavoritesProvider>
   );
 }
