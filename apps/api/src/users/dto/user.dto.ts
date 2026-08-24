@@ -35,11 +35,11 @@ export class UpdateProfileDto {
 export class ChangePasswordDto {
   @IsString()
   @Length(1, 200)
-  currentPassword: string;
+  currentPassword?: string;
 
   @IsString()
   @Length(8, 200, { message: 'new password must be at least 8 characters' })
   @Matches(/[A-Za-z]/, { message: 'password must contain a letter' })
   @Matches(/[0-9]/, { message: 'password must contain a number' })
-  newPassword: string;
+  newPassword?: string;
 }

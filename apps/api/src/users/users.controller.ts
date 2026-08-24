@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -23,5 +23,20 @@ export class UsersController {
   @Post('me/password')
   changePassword(@CurrentUser() current: JwtUser, @Body() dto: ChangePasswordDto) {
     return this.users.changePassword(current.sub, dto);
+  }
+
+  @Get('me/notifications')
+  notifications(@CurrentUser() current: JwtUser) {
+    return this.users.listNotifications(current.sub);
+  }
+
+  @Patch('me/notifications/read-all')
+  readAllNotifications(@CurrentUser() current: JwtUser) {
+    return this.users.markAllNotificationsRead(current.sub);
+  }
+
+  @Patch('me/notifications/:id/read')
+  readNotification(@CurrentUser() current: JwtUser, @Param('id') id: string) {
+    return this.users.markNotificationRead(current.sub, id);
   }
 }

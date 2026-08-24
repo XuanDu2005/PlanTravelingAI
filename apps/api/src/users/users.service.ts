@@ -63,18 +63,37 @@ export class UsersService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 
-    const ok = await bcrypt.compare(dto.currentPassword, user.password);
+   const ok = await bcrypt.compare(dto.currentPassword!, user.password);
     if (!ok) throw new UnauthorizedException('Current password is incorrect');
 
     if (dto.currentPassword === dto.newPassword) {
       throw new BadRequestException('New password must be different');
     }
 
-    const hash = await bcrypt.hash(dto.newPassword, 10);
+    const hash = await bcrypt.hash(dto.newPassword!, 10);
     await this.prisma.user.update({
       where: { id: userId },
       data: { password: hash },
     });
+    return { ok: true };
+  }
+
+  async listNotifications(userId: string) {
+    return this.prisma.notification.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+  }
+
+  async markNotificationRead(userId: string, id: string) {
+    const notification = await this.prisma.notification.findFirst({ where: { id, userId } });
+    if (!notification) throw new NotFoundException('Notification not found');
+    return this.prisma.notification.update({ where: { id }, data: { isRead: true } });
+  }
+
+  async markAllNotificationsRead(userId: string) {
+    await this.prisma.notification.updateMany({ where: { userId, isRead: false }, data: { isRead: true } });
     return { ok: true };
   }
 }
