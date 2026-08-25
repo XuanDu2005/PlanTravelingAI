@@ -19,18 +19,33 @@ function formatDateRange(startIso: string, endIso: string): string {
       month: 'short',
       day: 'numeric',
     });
-  return `${fmt(startIso)} - ${fmt(endIso)}`;
+  return `${fmt(startIso)} → ${fmt(endIso)}`;
 }
 
 function statusBadge(status: AdminTrip['status'], t: (k: string) => string) {
   switch (status) {
     case 'DRAFT':
-      return <span className="badge-muted">{t('status.DRAFT')}</span>;
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+          <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+          {t('status.DRAFT')}
+        </span>
+      );
     case 'ARCHIVED':
-      return <span className="badge-warning">{t('status.ARCHIVED')}</span>;
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-950/60 border border-amber-200/80 dark:border-amber-800/60 px-2.5 py-0.5 text-[11px] font-bold text-amber-700 dark:text-amber-300">
+          <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+          {t('status.ARCHIVED')}
+        </span>
+      );
     case 'GENERATED':
     default:
-      return <span className="badge-success">{t('status.GENERATED')}</span>;
+      return (
+        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800/60 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          {t('status.GENERATED')}
+        </span>
+      );
   }
 }
 
@@ -92,41 +107,34 @@ export default function AdminTripsPage() {
   const totalCount = trips.length;
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold text-ink-900 dark:text-slate-100">
-            {t('admin.tripsTitle')}
-          </h1>
-          <p className="mt-1 text-sm text-ink-500 dark:text-slate-400">
-            {t('admin.tripsSubtitle', { count: totalCount })}
-          </p>
-        </div>
-      </header>
+    <div className="space-y-4">
 
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[220px]">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500">
-            🔍
+      {/* Filter & Search Toolbar Card */}
+      <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#0D1527] p-3.5 shadow-xs flex flex-wrap items-center justify-between gap-3">
+        <div className="relative flex-1 min-w-[240px] max-w-md">
+          <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           </span>
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t('admin.tripsSearchPlaceholder')}
-            className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-surface-100 dark:bg-surface-200 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-brand-400 dark:focus:ring-brand-900/40"
+            className="w-full h-10 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/80 pl-10 pr-3 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/15 transition"
           />
         </div>
-        <div className="flex flex-wrap gap-1 rounded-full bg-slate-100 p-1 text-xs dark:bg-surface-100">
+
+        {/* High Contrast Status Filter Tabs */}
+        <div className="flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60">
           {STATUS_FILTERS.map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => setFilter(s)}
-              className={`rounded-full px-3 py-1 font-medium transition ${
+              className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                 filter === s
-                  ? 'bg-white text-brand-700 shadow dark:bg-surface-200 dark:text-brand-300'
-                  : 'text-ink-600 hover:text-ink-900 dark:text-slate-400 dark:hover:text-slate-100'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               {s === 'ALL' ? t('admin.tripsFilterAll') : t(`status.${s}`)}
@@ -141,60 +149,62 @@ export default function AdminTripsPage() {
           description={t('admin.tripsEmptyDesc')}
         />
       ) : (
-        <div className="card overflow-hidden">
+        /* Trips Data Table */
+        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#0D1527] shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-ink-100 text-sm dark:divide-surface-100">
-              <thead className="bg-ink-100/40 text-left text-xs uppercase tracking-wide text-ink-500 dark:bg-surface-100 dark:text-slate-400">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50/90 dark:bg-slate-800/80 border-b border-slate-200/80 dark:border-slate-800 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 <tr>
-                  <th className="px-5 py-3 font-medium">
-                    {t('admin.colDestination')}
-                  </th>
-                  <th className="px-5 py-3 font-medium">{t('admin.colTripUser')}</th>
-                  <th className="px-5 py-3 font-medium">{t('admin.colTripDates')}</th>
-                  <th className="px-5 py-3 font-medium">{t('admin.colTripTravelers')}</th>
-                  <th className="px-5 py-3 font-medium">{t('admin.colTripBudget')}</th>
-                  <th className="px-5 py-3 font-medium">{t('admin.colRecStatus')}</th>
-                  <th className="px-5 py-3 font-medium">{t('admin.colCreated')}</th>
-                  <th className="px-5 py-3 font-medium text-right">
-                    {t('admin.colActions')}
-                  </th>
+                  <th className="px-5 py-3.5">{t('admin.colDestination')}</th>
+                  <th className="px-5 py-3.5">{t('admin.colTripUser')}</th>
+                  <th className="px-5 py-3.5">{t('admin.colTripDates')}</th>
+                  <th className="px-5 py-3.5">{t('admin.colTripTravelers')}</th>
+                  <th className="px-5 py-3.5">{t('admin.colTripBudget')}</th>
+                  <th className="px-5 py-3.5">{t('admin.colRecStatus')}</th>
+                  <th className="px-5 py-3.5">{t('admin.colCreated')}</th>
+                  <th className="px-5 py-3.5 text-right">{t('admin.colActions')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-ink-100 dark:divide-surface-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
                 {filtered.map((trip) => (
-                  <tr key={trip.id} className="hover:bg-slate-50 dark:hover:bg-surface-100">
-                    <td className="px-5 py-3 font-medium text-ink-900 dark:text-slate-100">
+                  <tr
+                    key={trip.id}
+                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
+                  >
+                    <td className="px-5 py-3.5 font-bold text-slate-900 dark:text-white">
                       {trip.destination}
                     </td>
-                    <td className="px-5 py-3 text-ink-700 dark:text-slate-200">
-                      <div className="font-medium text-ink-900 dark:text-slate-100">{trip.user.name}</div>
-                      <div className="text-xs text-ink-500 dark:text-slate-400">{trip.user.email}</div>
+                    <td className="px-5 py-3.5">
+                      <div className="font-bold text-slate-900 dark:text-white">
+                        {trip.user.name}
+                      </div>
+                      <div className="text-[11px] text-slate-400 font-mono">{trip.user.email}</div>
                     </td>
-                    <td className="px-5 py-3 text-ink-700 dark:text-slate-200">
+                    <td className="px-5 py-3.5 text-slate-600 dark:text-slate-300">
                       {formatDateRange(trip.startDate, trip.endDate)}
                     </td>
-                    <td className="px-5 py-3 text-ink-700 dark:text-slate-200">
+                    <td className="px-5 py-3.5 text-slate-700 dark:text-slate-200 font-semibold">
                       {trip.travelers} {t('admin.tripsTravelersUnit')}
                     </td>
-                    <td className="px-5 py-3 text-ink-700 dark:text-slate-200">{formatBudgetLabel(trip.budget, t)}</td>
-                    <td className="px-5 py-3">{statusBadge(trip.status, t)}</td>
-                    <td className="px-5 py-3 text-ink-500 dark:text-slate-400">
+                    <td className="px-5 py-3.5 font-bold text-slate-800 dark:text-slate-200">
+                      {formatBudgetLabel(trip.budget, t)}
+                    </td>
+                    <td className="px-5 py-3.5">{statusBadge(trip.status, t)}</td>
+                    <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400">
                       {new Date(trip.createdAt).toLocaleDateString(undefined, {
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric',
                       })}
                     </td>
-                    <td className="px-5 py-3 text-right">
+                    <td className="px-5 py-3.5 text-right">
                       <button
                         type="button"
                         onClick={() => handleDelete(trip.id)}
                         disabled={deletingId === trip.id}
-                        className="btn-danger disabled:opacity-50"
+                        className="rounded-lg px-3 py-1.5 text-xs font-bold border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-400 transition cursor-pointer disabled:opacity-40"
                       >
-                        {deletingId === trip.id
-                          ? t('admin.tripsDeleting')
-                          : t('common.delete')}
+                        {deletingId === trip.id ? t('admin.tripsDeleting') : t('common.delete')}
                       </button>
                     </td>
                   </tr>
@@ -202,9 +212,14 @@ export default function AdminTripsPage() {
               </tbody>
             </table>
           </div>
-          {filtered.length === 0 && (
-            <div className="border-t border-ink-100 px-5 py-6 text-center text-sm text-ink-500 dark:border-surface-100 dark:text-slate-400">
+
+          {filtered.length === 0 ? (
+            <div className="px-5 py-10 text-center text-xs text-slate-400">
               {t('admin.tripsNoMatch', { count })}
+            </div>
+          ) : (
+            <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+              <span>Hiển thị <strong>{filtered.length}</strong> / <strong>{totalCount}</strong> chuyến đi</span>
             </div>
           )}
         </div>
