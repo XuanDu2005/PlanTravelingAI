@@ -35,7 +35,14 @@ export interface ItineraryActivity {
   estimatedCost: string;
   transport: string;
   imageUrl: string;
+  imageSourceUrl?: string;
   category: string;
+  suggestedPlaces?: Array<{
+    name: string;
+    address: string;
+    specialty: string;
+    priceRange: string;
+  }>;
 }
 
 export interface ItineraryDay {
@@ -60,6 +67,26 @@ export interface TripItinerary {
   content: GeneratedItinerary | null;
   createdAt: string;
   updatedAt: string;
+  versionCount?: number;
+}
+
+export interface TripExpense {
+  id: string;
+  title: string;
+  category: string;
+  amount: number;
+  paidBy: string;
+  spentAt: string;
+  createdAt: string;
+}
+
+export interface TripPackingItem {
+  id: string;
+  name: string;
+  category: string;
+  quantity: number;
+  isPacked: boolean;
+  createdAt: string;
 }
 
 export interface Trip {
@@ -69,12 +96,63 @@ export interface Trip {
   startDate: string;
   endDate: string;
   travelers: number;
-  budget: string;
+  budget: number;
   preferences: string;
   status: TripStatus;
   createdAt: string;
   updatedAt: string;
   itinerary: TripItinerary | null;
+  expenses: TripExpense[];
+  packingItems: TripPackingItem[];
+}
+
+export interface WeatherDayAdvice {
+  icon: string;
+  level: 'INFO' | 'CAUTION' | 'WARNING';
+  text: string;
+}
+
+export interface WeatherDayForecast {
+  date: string;
+  weatherCode: number;
+  weatherLabel: string;
+  weatherEmoji: string;
+  temperatureMax: number;
+  temperatureMin: number;
+  precipitationSum: number;
+  uvIndexMax: number;
+  windSpeedMax: number;
+  sunrise: string;
+  sunset: string;
+  advice: WeatherDayAdvice[];
+}
+
+export interface WeatherResolvedLocation {
+  name: string;
+  country: string;
+  admin1?: string;
+  latitude: number;
+  longitude: number;
+  timezone: string;
+}
+
+export interface WeatherForecastResponse {
+  destination: string;
+  resolvedLocation: WeatherResolvedLocation;
+  units: {
+    temperature: '°C';
+    precipitation: 'mm';
+    windSpeed: 'km/h';
+    uvIndex: 'index';
+  };
+  fetchedAt: string;
+  days: WeatherDayForecast[];
+  itineraryAlignment?: Array<{
+    day: number;
+    date: string;
+    theme: string;
+    forecast: WeatherDayForecast;
+  }>;
 }
 
 export type RecCategory =
@@ -102,6 +180,18 @@ export interface RecommendationSummary {
 
 export interface Recommendation extends RecommendationSummary {
   content: GeneratedItinerary | null;
+  reviews?: RecommendationReview[];
+}
+
+export interface RecommendationReview {
+  id: string;
+  recommendationId: string;
+  userId: string;
+  userName: string;
+  rating: number;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateRecommendationPayload {
@@ -136,7 +226,7 @@ export interface AdminTrip {
   startDate: string;
   endDate: string;
   travelers: number;
-  budget: string;
+  budget: number;
   preferences: string;
   status: TripStatus;
   createdAt: string;
@@ -206,7 +296,7 @@ export interface CreateTripPayload {
   startDate: string;
   endDate: string;
   travelers: number;
-  budget: string;
+  budget: number;
   preferences?: string;
 }
 
@@ -262,3 +352,13 @@ export type HeroSlideCreatePayload = {
   sortOrder?: number;
   isActive?: boolean;
 };
+
+export interface AppNotification {
+  id: string;
+  type: 'INFO' | 'WEATHER' | 'COLLABORATION' | 'BOOKING';
+  title: string;
+  message: string;
+  link: string;
+  isRead: boolean;
+  createdAt: string;
+}
