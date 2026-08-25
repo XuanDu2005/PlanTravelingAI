@@ -19,9 +19,11 @@ import {
   Recommendation,
   RecommendationSummary,
   Trip,
+  AppNotification,
   UpdateProfilePayload,
   UpdateRecommendationPayload,
   UserProfile,
+  WeatherForecastResponse,
 } from '@/types';
 
 export const authService = {
@@ -86,6 +88,36 @@ export const tripService = {
     await api.delete(`/trips/${id}`);
   },
 
+  async replan(id: string, payload: { dayIndex?: number; activityIndex?: number; reason?: string }): Promise<Trip> {
+    const { data } = await aiApi.post<Trip>(`/trips/${id}/replan`, payload);
+    return data;
+  },
+
+  async updateItinerary(id: string, content: GeneratedItinerary): Promise<Trip> {
+    const { data } = await api.patch<Trip>(`/trips/${id}/itinerary`, { content });
+    return data;
+  },
+
+  async addExpense(id: string, payload: { title: string; category: string; amount: number; paidBy?: string; spentAt?: string }): Promise<void> {
+    await api.post(`/trips/${id}/expenses`, payload);
+  },
+  async removeExpense(id: string, expenseId: string): Promise<void> {
+    await api.delete(`/trips/${id}/expenses/${expenseId}`);
+  },
+  async addPacking(id: string, payload: { name: string; category?: string; quantity?: number }): Promise<void> {
+    await api.post(`/trips/${id}/packing`, payload);
+  },
+  async updatePacking(id: string, itemId: string, payload: { isPacked?: boolean; quantity?: number }): Promise<void> {
+    await api.patch(`/trips/${id}/packing/${itemId}`, payload);
+  },
+  async removePacking(id: string, itemId: string): Promise<void> {
+    await api.delete(`/trips/${id}/packing/${itemId}`);
+  },
+  async generatePacking(id: string): Promise<{ created: number }> {
+    const { data } = await aiApi.post<{ created: number }>(`/trips/${id}/packing/generate`);
+    return data;
+  },
+
   async generateItinerary(payload: CreateTripPayload): Promise<GeneratedItinerary> {
     const { data } = await aiApi.post<GeneratedItinerary>('/ai/generate', payload);
     return data;
@@ -101,6 +133,19 @@ export const recommendationService = {
     const { data } = await api.get<Recommendation>(`/recommendations/${id}`);
     return data;
   },
+  async review(id: string, rating: number, content: string): Promise<Recommendation> {
+    const { data } = await api.post<Recommendation>(`/recommendations/${id}/reviews`, { rating, content });
+    return data;
+  },
+};
+
+export const notificationService = {
+  async list(): Promise<AppNotification[]> {
+    const { data } = await api.get<AppNotification[]>('/users/me/notifications');
+    return data;
+  },
+  async read(id: string): Promise<void> { await api.patch(`/users/me/notifications/${id}/read`); },
+  async readAll(): Promise<void> { await api.patch('/users/me/notifications/read-all'); },
 };
 
 export const favoriteService = {
@@ -147,12 +192,26 @@ export const adminService = {
   async deleteUser(id: string): Promise<void> {
     await api.delete(`/admin/users/${id}`);
   },
-  async setUserStatus(
-    id: string,
-    status: 'ACTIVE' | 'LOCKED',
-    reason?: string,
-  ): Promise<void> {
+  async setUserStatus(id: string, status: 'ACTIVE' | 'LOCKED', reason?: string): Promise<void> {
     await api.patch(`/admin/users/${id}/status`, { status, reason });
+  },
+  async publishRecommendation(id: string, isPublished: boolean): Promise<void> {
+    await api.patch(`/admin/recommendations/${id}`, { isPublished });
+  },
+  async createHeroSlide(payload: HeroSlideCreatePayload): Promise<AdminHeroSlide> {
+    const { data } = await api.post<AdminHeroSlide>('/admin/hero/slides', payload);
+    return data;
+  },
+  async updateHeroSlide(id: string, payload: HeroSlideUpdatePayload): Promise<AdminHeroSlide> {
+    const { data } = await api.patch<AdminHeroSlide>(`/admin/hero/slides/${id}`, payload);
+    return data;
+  },
+  async deleteHeroSlide(id: string): Promise<void> {
+    await api.delete(`/admin/hero/slides/${id}`);
+  },
+  async reorderHeroSlide(id: string, direction: 'up' | 'down'): Promise<AdminHeroSlide> {
+    const { data } = await api.post<AdminHeroSlide>(`/admin/hero/slides/${id}/move`, { direction });
+    return data;
   },
   async createRecommendation(payload: CreateRecommendationPayload): Promise<Recommendation> {
     const { data } = await api.post<Recommendation>('/admin/recommendations', payload);
@@ -165,8 +224,51 @@ export const adminService = {
   async deleteRecommendation(id: string): Promise<void> {
     await api.delete(`/admin/recommendations/${id}`);
   },
-  async publish(id: string): Promise<Recommendation> {
-    const { data } = await api.patch<Recommendation>(`/admin/recommendations/${id}/publish`);
+};
+
+export const heroService = {
+  async list(): Promise<AdminHeroSlide[]> {
+    const { data } = await api.get<AdminHeroSlide[]>('/hero/slides');
+    return data;
+  },
+  async listAll(): Promise<AdminHeroSlide[]> {
+    const { data } = await api.get<AdminHeroSlide[]>('/admin/hero/slides');
+    return data;
+  },
+  async create(payload: HeroSlideCreatePayload): Promise<AdminHeroSlide> {
+    const { data } = await api.post<AdminHeroSlide>('/admin/hero/slides', payload);
+    return data;
+  },
+  async update(id: string, payload: HeroSlideUpdatePayload): Promise<AdminHeroSlide> {
+    const { data } = await api.patch<AdminHeroSlide>(`/admin/hero/slides/${id}`, payload);
+    return data;
+  },
+  async remove(id: string): Promise<void> {
+    await api.delete(`/admin/hero/slides/${id}`);
+  },
+  async move(id: string, direction: 'up' | 'down'): Promise<AdminHeroSlide> {
+    const { data } = await api.post<AdminHeroSlide>(`/admin/hero/slides/${id}/move`, { direction });
+    return data;
+  },
+};
+
+export const weatherService = {
+  async forecast(params: {
+    destination: string;
+    startDate: string;
+    endDate: string;
+    itineraryDays?: Array<{ day: number; date: string; theme: string }>;
+  }): Promise<WeatherForecastResponse> {
+    const { destination, startDate, endDate, itineraryDays } = params;
+    const search: Record<string, string> = {
+      destination,
+      startDate,
+      endDate,
+    };
+    if (itineraryDays && itineraryDays.length > 0) {
+      search.itineraryDays = JSON.stringify(itineraryDays);
+    }
+    const { data } = await api.get<WeatherForecastResponse>('/weather', { params: search });
     return data;
   },
 };
@@ -176,62 +278,19 @@ export const chatService = {
     const { data } = await api.get<ChatSessionSummary[]>('/chat/sessions');
     return data;
   },
-
   async createSession(): Promise<ChatSessionSummary> {
-    const { data } = await api.post<ChatSessionSummary>('/chat/sessions');
+    const { data } = await api.post<ChatSessionSummary>('/chat/sessions', {});
     return data;
   },
-
-  async listMessages(sessionId: string): Promise<ChatMessage[]> {
-    const { data } = await api.get<ChatMessage[]>(`/chat/sessions/${sessionId}/messages`);
+  async listMessages(id: string): Promise<ChatMessage[]> {
+    const { data } = await api.get<ChatMessage[]>(`/chat/sessions/${id}/messages`);
     return data;
   },
-
-  async sendMessage(sessionId: string, content: string): Promise<ChatSendResponse> {
-    // Chat goes through aiApi because the AI provider call can take 20-60s on
-    // slower models (Gemini/Ollama). Regular 20s timeout is too tight.
-    const { data } = await aiApi.post<ChatSendResponse>(
-      `/chat/sessions/${sessionId}/messages`,
-      { content },
-    );
+  async sendMessage(id: string, content: string): Promise<ChatSendResponse> {
+    const { data } = await aiApi.post<ChatSendResponse>(`/chat/sessions/${id}/messages`, { content });
     return data;
   },
-
-  async deleteSession(sessionId: string): Promise<void> {
-    await api.delete(`/chat/sessions/${sessionId}`);
-  },
-};
-
-export const heroService = {
-  async listActiveSlides(): Promise<{ id: string; imageUrl: string }[]> {
-    const { data } = await api.get<{ id: string; imageUrl: string }[]>('/hero/slides');
-    return data;
-  },
-
-  async listAll(): Promise<AdminHeroSlide[]> {
-    const { data } = await api.get<AdminHeroSlide[]>('/admin/hero/slides');
-    return data;
-  },
-
-  async create(payload: HeroSlideCreatePayload): Promise<AdminHeroSlide> {
-    const { data } = await api.post<AdminHeroSlide>('/admin/hero/slides', payload);
-    return data;
-  },
-
-  async update(id: string, payload: HeroSlideUpdatePayload): Promise<AdminHeroSlide> {
-    const { data } = await api.patch<AdminHeroSlide>(`/admin/hero/slides/${id}`, payload);
-    return data;
-  },
-
-  async move(id: string, direction: 'up' | 'down'): Promise<AdminHeroSlide | null> {
-    const { data } = await api.post<AdminHeroSlide>(
-      `/admin/hero/slides/${id}/move`,
-      { direction },
-    );
-    return data;
-  },
-
-  async remove(id: string): Promise<void> {
-    await api.delete(`/admin/hero/slides/${id}`);
+  async deleteSession(id: string): Promise<void> {
+    await api.delete(`/chat/sessions/${id}`);
   },
 };
