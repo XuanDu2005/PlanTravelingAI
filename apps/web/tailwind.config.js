@@ -36,19 +36,41 @@ export default {
       },
       fontFamily: {
         sans: [
-          '"Segoe UI"',
-          '"Segoe UI Semibold"',
+          '"Plus Jakarta Sans"',
+          '"Outfit"',
           'system-ui',
           '-apple-system',
-          'Roboto',
-          '"Helvetica Neue"',
-          'Arial',
           'sans-serif',
         ],
+        outfit: ['"Outfit"', 'sans-serif'],
+        display: ['"Playfair Display"', 'serif'],
+        jakarta: ['"Plus Jakarta Sans"', 'sans-serif'],
+      },
+      fontWeight: {
+        // Bump every weight by one step so the whole app feels thicker
+        // and consistent without changing any markup.
+        thin: '200',
+        extralight: '300',
+        light: '400',
+        normal: '500',
+        medium: '600',
+        semibold: '700',
+        bold: '800',
+        extrabold: '900',
+        black: '900',
       },
       boxShadow: {
         card: '0 10px 30px -10px rgba(20, 40, 90, 0.18)',
         cardDark: '0 10px 30px -10px rgba(0, 0, 0, 0.6)',
+      },
+      keyframes: {
+        'toast-slide-in': {
+          '0%': { opacity: '0', transform: 'translateY(16px) scale(0.96)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+      },
+      animation: {
+        'toast-slide-in': 'toast-slide-in 320ms cubic-bezier(0.16, 1, 0.3, 1)',
       },
     },
   },
