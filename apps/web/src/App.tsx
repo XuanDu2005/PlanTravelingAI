@@ -4,10 +4,13 @@ import { AuthProvider, useAuth } from './store/AuthContext';
 import { ThemeProvider } from './store/ThemeContext';
 import { ConfirmProvider } from './components/ConfirmProvider';
 import { FavoritesProvider } from './store/FavoritesProvider';
+import { NotificationProvider } from './contexts/NotificationContext';
+import NotificationToasts from './components/NotificationToasts';
 import MainLayout from './layouts/MainLayout';
 import AdminLayout from './layouts/AdminLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 import HomePage from './pages/Home/HomePage';
+import AboutPage from './pages/About/AboutPage';
 import LoginPage from './pages/Login/LoginPage';
 import RegisterPage from './pages/Register/RegisterPage';
 import CreateTripPage from './pages/CreateTrip/CreateTripPage';
@@ -29,59 +32,63 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <ConfirmProvider>
-          <FavoritesGate>
-          <Routes>
-        {/* Public site */}
-        <Route element={<MainLayout />}>
-          <Route index element={<HomePage />} />
-          <Route path="login" element={<LoginPage />} />
-          <Route path="register" element={<RegisterPage />} />
-          <Route path="recommendations" element={<RecommendationsPage />} />
-          <Route
-            path="recommendations/:id"
-            element={<RecommendationDetailPage />}
-          />
+        <NotificationProvider>
+          <ConfirmProvider>
+            <FavoritesGate>
+              <Routes>
+                {/* Public site */}
+                <Route element={<MainLayout />}>
+                  <Route index element={<HomePage />} />
+                  <Route path="about" element={<AboutPage />} />
+                  <Route path="login" element={<LoginPage />} />
+                  <Route path="register" element={<RegisterPage />} />
+                  <Route path="recommendations" element={<RecommendationsPage />} />
+                  <Route
+                    path="recommendations/:id"
+                    element={<RecommendationDetailPage />}
+                  />
 
-          <Route element={<ProtectedRoute />}>
-            <Route path="create-trip" element={<CreateTripPage />} />
-            <Route path="trips" element={<MyTripsPage />} />
-            <Route path="trips/:id" element={<TripDetailPage />} />
-            <Route path="profile" element={<ProfilePage />} />
-          </Route>
-        </Route>
+                  <Route element={<ProtectedRoute />}>
+                    <Route path="create-trip" element={<CreateTripPage />} />
+                    <Route path="trips" element={<MyTripsPage />} />
+                    <Route path="trips/:id" element={<TripDetailPage />} />
+                    <Route path="profile" element={<ProfilePage />} />
+                  </Route>
+                </Route>
 
-        {/* Admin area */}
-        <Route
-          path="admin"
-          element={
-            <ProtectedRoute requireAdmin>
-              <AdminLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<AdminDashboardPage />} />
-          <Route path="trips" element={<AdminTripsPage />} />
-          <Route path="users" element={<AdminUsersPage />} />
-          <Route path="recommendations" element={<AdminRecommendationsPage />} />
-          <Route
-            path="recommendations/new"
-            element={<AdminRecommendationFormPage mode="create" />}
-          />
-          <Route
-            path="recommendations/:id/edit"
-            element={<AdminRecommendationFormPage mode="edit" />}
-          />
-          <Route path="analytics" element={<AdminAnalyticsPage />} />
-          <Route path="settings" element={<AdminSettingsPage />} />
-          <Route path="hero" element={<AdminHeroPage />} />
-        </Route>
+                {/* Admin area */}
+                <Route
+                  path="admin"
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <AdminLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route index element={<Navigate to="dashboard" replace />} />
+                  <Route path="dashboard" element={<AdminDashboardPage />} />
+                  <Route path="trips" element={<AdminTripsPage />} />
+                  <Route path="users" element={<AdminUsersPage />} />
+                  <Route path="recommendations" element={<AdminRecommendationsPage />} />
+                  <Route
+                    path="recommendations/new"
+                    element={<AdminRecommendationFormPage mode="create" />}
+                  />
+                  <Route
+                    path="recommendations/:id/edit"
+                    element={<AdminRecommendationFormPage mode="edit" />}
+                  />
+                  <Route path="analytics" element={<AdminAnalyticsPage />} />
+                  <Route path="settings" element={<AdminSettingsPage />} />
+                  <Route path="hero" element={<AdminHeroPage />} />
+                </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-        </FavoritesGate>
-        </ConfirmProvider>
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+              <NotificationToasts />
+            </FavoritesGate>
+          </ConfirmProvider>
+        </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>
   );
