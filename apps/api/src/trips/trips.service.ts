@@ -7,13 +7,16 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { CreateTripDto } from './dto/trip.dto';
+import { UpdateItineraryDto } from './dto/workspace.dto';
 import type { TripItineraryInput } from '../ai/ai.types';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class TripsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ai: AiService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async create(userId: string, dto: CreateTripDto) {
@@ -58,6 +61,14 @@ export class TripsService {
       include: { itineraries: true },
     });
 
+    await this.notifications.create({
+      userId,
+      type: 'INFO',
+      title: '🎉 Lịch trình đã sẵn sàng!',
+      message: `AI đã tạo xong lịch trình ${generated.title || dto.destination} cho bạn.`,
+      link: `/trips/${trip.id}`,
+    });
+
     return this.formatTrip(trip);
   }
 
@@ -65,7 +76,7 @@ export class TripsService {
     const trips = await this.prisma.trip.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
-      include: { itineraries: true },
+      include: { itineraries: true, expenses: true, packingItems: true },
     });
     return trips.map((trip) => this.formatTrip(trip));
   }
@@ -73,11 +84,41 @@ export class TripsService {
   async getById(userId: string, tripId: string) {
     const trip = await this.prisma.trip.findUnique({
       where: { id: tripId },
-      include: { itineraries: { orderBy: { createdAt: 'asc' } } },
+      include: {
+        itineraries: { orderBy: { createdAt: 'asc' } },
+        expenses: { orderBy: { spentAt: 'desc' } },
+        packingItems: { orderBy: { createdAt: 'asc' } },
+      },
     });
     if (!trip) throw new NotFoundException('Trip not found');
     if (trip.userId !== userId) throw new ForbiddenException('Not allowed');
     return this.formatTrip(trip);
+  }
+
+  async updateItinerary(userId: string, tripId: string, dto: UpdateItineraryDto) {
+    const trip = await this.prisma.trip.findUnique({
+      where: { id: tripId },
+      include: { itineraries: { orderBy: { createdAt: 'asc' } } },
+    });
+    if (!trip) throw new NotFoundException('Trip not found');
+    if (trip.userId !== userId) throw new ForbiddenException('Not allowed');
+    const itin = trip.itineraries[0];
+    if (!itin) throw new NotFoundException('Itinerary not found');
+    const serialized = JSON.stringify(dto.content);
+    await this.prisma.itinerary.update({
+      where: { id: itin.id },
+      data: { content: serialized },
+    });
+
+    await this.notifications.create({
+      userId,
+      type: 'INFO',
+      title: '✏️ Lịch trình đã được cập nhật',
+      message: `Bạn vừa chỉnh sửa lịch trình cho chuyến ${trip.destination}.`,
+      link: `/trips/${tripId}`,
+    });
+
+    return this.getById(userId, tripId);
   }
 
   async remove(userId: string, tripId: string) {
@@ -95,7 +136,7 @@ export class TripsService {
     startDate: Date;
     endDate: Date;
     travelers: number;
-    budget: string;
+    budget: number;
     preferences: string;
     status: string;
     createdAt: Date;
@@ -108,9 +149,26 @@ export class TripsService {
       createdAt: Date;
       updatedAt: Date;
     }>;
+    expenses?: Array<{
+      id: string;
+      title: string;
+      category: string;
+      amount: number;
+      paidBy: string;
+      spentAt: Date;
+      createdAt: Date;
+    }>;
+    packingItems?: Array<{
+      id: string;
+      name: string;
+      category: string;
+      quantity: number;
+      isPacked: boolean;
+      createdAt: Date;
+    }>;
   }) {
     const itin = trip.itineraries[0];
-    let parsedContent: unknown = itin ? safeParse(itin.content) : null;
+    const parsedContent: unknown = itin ? safeParse(itin.content) : null;
     return {
       id: trip.id,
       userId: trip.userId,
@@ -133,6 +191,23 @@ export class TripsService {
             updatedAt: itin.updatedAt.toISOString(),
           }
         : null,
+      expenses: (trip.expenses ?? []).map((e) => ({
+        id: e.id,
+        title: e.title,
+        category: e.category,
+        amount: e.amount,
+        paidBy: e.paidBy,
+        spentAt: e.spentAt.toISOString(),
+        createdAt: e.createdAt.toISOString(),
+      })),
+      packingItems: (trip.packingItems ?? []).map((p) => ({
+        id: p.id,
+        name: p.name,
+        category: p.category,
+        quantity: p.quantity,
+        isPacked: p.isPacked,
+        createdAt: p.createdAt.toISOString(),
+      })),
     };
   }
 }
