@@ -128,7 +128,6 @@ docker compose -f docker/docker-compose.yml down -v
 
 - AI responses come from `MockAiProvider` (deterministic per input). To use a real model:
   - **Gemini** (default, recommended): set `AI_PROVIDER=gemini` and `AI_API_KEY=...` in `.env`. Get a free key at https://aistudio.google.com/apikey. Default model is `gemini-2.5-flash`.
-  - **OpenAI**: set `AI_PROVIDER=openai` and `AI_API_KEY=sk-...`. The `OpenAiProvider` class is still stubbed (mock response) — wire a real network call before relying on it.
   - **Mock**: set `AI_PROVIDER=mock` to always use the bundled deterministic provider.
 - If `AI_PROVIDER=gemini` is selected but `AI_API_KEY` is empty, the backend logs a warning and falls back to the mock provider so the app keeps running.
 
