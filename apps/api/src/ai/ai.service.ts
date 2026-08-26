@@ -4,6 +4,8 @@ import {
   AiChatMessage,
   AiProvider,
   GeneratedItinerary,
+  PackingItemSuggestion,
+  PackingListInput,
   TripItineraryInput,
 } from './ai.types';
 
@@ -15,6 +17,10 @@ export class AiService {
 
   generateItinerary(input: TripItineraryInput): Promise<GeneratedItinerary> {
     return this.provider.generateItinerary(input);
+  }
+
+  generatePackingList(input: PackingListInput): Promise<PackingItemSuggestion[]> {
+    return this.provider.generatePackingList(input);
   }
 
   chat(messages: AiChatMessage[]): Promise<string> {

@@ -3,7 +3,21 @@ export interface TripItineraryInput {
   startDate: string;
   endDate: string;
   travelers: number;
-  budget: string;
+  /** Raw VND amount (integer). e.g. 5000000 = 5 million VND. */
+  budget: number;
+  preferences: string;
+}
+
+export interface PackingItemSuggestion {
+  name: string;
+  category: string;
+  quantity: number;
+}
+
+export interface PackingListInput {
+  destination: string;
+  daysCount: number;
+  travelers: number;
   preferences: string;
 }
 
@@ -35,6 +49,7 @@ export interface GeneratedItinerary {
 
 export interface AiProvider {
   generateItinerary(input: TripItineraryInput): Promise<GeneratedItinerary>;
+  generatePackingList(input: PackingListInput): Promise<PackingItemSuggestion[]>;
   chat(messages: AiChatMessage[]): Promise<string>;
 }
 
