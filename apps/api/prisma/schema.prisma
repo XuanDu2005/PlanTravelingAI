@@ -48,6 +48,7 @@ model User {
   trips        Trip[]
   favorites    Favorite[]
   chatSessions ChatSession[]
+  notifications Notification[]
 
   @@map("users")
 }
@@ -60,12 +61,14 @@ model Trip {
   startDate    DateTime
   endDate      DateTime
   travelers    Int
-  budget       String
+  budget       Int
   preferences  String        @default("")
   status       TripStatus    @default(DRAFT)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   itineraries  Itinerary[]
+  expenses     Expense[]
+  packingItems PackingItem[]
 
   @@index([userId])
   @@map("trips")
@@ -166,4 +169,57 @@ model HeroSlide {
 
   @@index([isActive, sortOrder])
   @@map("hero_slides")
+}
+
+model Expense {
+  id        String   @id @default(cuid())
+  tripId    String
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  title     String
+  category  String
+  amount    Int
+  paidBy    String   @default("")
+  spentAt   DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tripId])
+  @@map("expenses")
+}
+
+model PackingItem {
+  id        String   @id @default(cuid())
+  tripId    String
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  name      String
+  category  String   @default("Khác")
+  quantity  Int      @default(1)
+  isPacked  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tripId])
+  @@map("packing_items")
+}
+
+enum NotificationType {
+  INFO
+  WEATHER
+  COLLABORATION
+  BOOKING
+}
+
+model Notification {
+  id        String          @id @default(cuid())
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType @default(INFO)
+  title     String
+  message   String
+  link      String          @default("")
+  isRead    Boolean         @default(false)
+  createdAt DateTime        @default(now())
+
+  @@index([userId, createdAt])
+  @@map("notifications")
 }
