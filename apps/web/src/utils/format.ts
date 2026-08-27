@@ -9,22 +9,20 @@ export function formatVND(amount: number): string {
 }
 
 /**
- * Translate a raw budget value (stored in the DB / submitted by the form)
- * into a human-readable, locale-aware label.
- *
- * Supported raw values: "Budget" | "Mid-range" | "Premium" | "Luxury"
+ * Format a budget value for display. The backend now stores budgets as a raw
+ * VND integer, so this just renders the amount in VND. Kept for backwards
+ * compatibility with any caller passing a legacy tier label.
  */
-export function formatBudgetLabel(budget: string, t: (key: string) => string): string {
-  switch (budget) {
-    case 'Budget':
-      return t('createTrip.budgetBudget');
-    case 'Mid-range':
-      return t('createTrip.budgetMid');
-    case 'Premium':
-      return t('createTrip.budgetPremium');
-    case 'Luxury':
-      return t('createTrip.budgetLuxury');
-    default:
-      return budget;
+export function formatBudgetLabel(
+  budget: number | string,
+  _t?: (key: string) => string,
+): string {
+  if (typeof budget === 'number') return formatVND(budget);
+  // Legacy string tiers (Budget / Mid-range / Premium / Luxury) are no longer
+  // emitted by the form, but we still display them gracefully if old data
+  // surfaces.
+  if (typeof budget === 'string' && budget.trim().length > 0 && Number.isFinite(Number(budget))) {
+    return formatVND(Number(budget));
   }
+  return budget;
 }
