@@ -8,8 +8,17 @@ import en from './locales/en.json';
 const SUPPORTED_LANGUAGES = ['vi', 'en'] as const;
 const DEFAULT_LANGUAGE = 'vi';
 
-const stored =
-  typeof window !== 'undefined' ? localStorage.getItem('travelmind_lang') : null;
+// Safe localStorage access - only in browser and after mount
+function getStoredLanguage(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return localStorage.getItem('travelmind_lang');
+  } catch {
+    return null;
+  }
+}
+
+const stored = getStoredLanguage();
 
 const initialLanguage =
   stored && (SUPPORTED_LANGUAGES as readonly string[]).includes(stored)
@@ -33,12 +42,19 @@ void i18n
       caches: ['localStorage'],
       lookupLocalStorage: 'travelmind_lang',
     },
+    react: {
+      useSuspense: false,
+    },
   });
 
-document.documentElement.lang = i18n.language || DEFAULT_LANGUAGE;
+if (typeof window !== 'undefined') {
+  document.documentElement.lang = i18n.language || DEFAULT_LANGUAGE;
+}
 
 i18n.on('languageChanged', (lang) => {
-  document.documentElement.lang = lang;
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = lang;
+  }
   try {
     localStorage.setItem('travelmind_lang', lang);
   } catch {
