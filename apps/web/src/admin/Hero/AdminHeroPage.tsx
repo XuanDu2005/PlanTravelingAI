@@ -95,24 +95,21 @@ export default function AdminHeroPage() {
   if (!slides) return <LoadingState message={t('admin.heroLoading')} />;
 
   return (
-    <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-ink-900 dark:text-slate-100">
-            {t('admin.heroTitle')}
-          </h1>
-          <p className="mt-1 text-sm text-ink-500 dark:text-slate-400">
-            {t('admin.heroSubtitle', { count: slides.length })}
-          </p>
-        </div>
+    <div className="space-y-4">
+      {/* Top Action Bar */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+          Tổng số: <strong className="text-slate-900 dark:text-white">{slides.length}</strong> slide
+        </span>
         <button
           type="button"
           onClick={() => setDraft({ open: true, src: null })}
-          className="btn-primary"
+          className="flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2 text-xs font-bold text-white shadow-xs transition cursor-pointer"
         >
-          + {t('admin.heroAdd')}
+          <span className="text-sm font-bold">+</span>
+          <span>{t('admin.heroAdd')}</span>
         </button>
-      </header>
+      </div>
 
       {slides.length === 0 ? (
         <EmptyState
@@ -120,19 +117,19 @@ export default function AdminHeroPage() {
           description={t('admin.heroEmptyDesc')}
         />
       ) : (
-        <div className="card overflow-hidden">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#0D1527] shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-ink-100 text-sm dark:divide-surface-100">
-              <thead className="bg-ink-100/40 text-left text-xs uppercase tracking-wide text-ink-500 dark:bg-surface-100 dark:text-slate-400">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50/90 dark:bg-slate-800/80 border-b border-slate-200/80 dark:border-slate-800 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 <tr>
-                  <th className="px-5 py-3 font-medium">{t('admin.heroColOrder')}</th>
-                  <th className="px-5 py-3 font-medium">{t('admin.heroColPreview')}</th>
-                  <th className="px-5 py-3 font-medium">{t('admin.heroColUrl')}</th>
-                  <th className="px-5 py-3 font-medium">{t('admin.heroColStatus')}</th>
-                  <th className="px-5 py-3 font-medium text-right">{t('admin.colActions')}</th>
+                  <th className="px-5 py-3.5 w-28">{t('admin.heroColOrder')}</th>
+                  <th className="px-5 py-3.5 w-36">{t('admin.heroColPreview')}</th>
+                  <th className="px-5 py-3.5">{t('admin.heroColUrl')}</th>
+                  <th className="px-5 py-3.5 w-36">{t('admin.heroColStatus')}</th>
+                  <th className="px-5 py-3.5 text-right w-48">{t('admin.colActions')}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-ink-100 dark:divide-surface-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
                 {slides.map((slide, idx) => {
                   const rowBusy = busyId === slide.id;
                   const canMoveUp = idx > 0;
@@ -140,16 +137,15 @@ export default function AdminHeroPage() {
                   return (
                     <tr
                       key={slide.id}
-                      className="hover:bg-slate-50 dark:hover:bg-surface-100"
+                      className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
                     >
-                      <td className="px-5 py-3 align-middle text-ink-700 dark:text-slate-200">
-                        <div className="flex items-center gap-1">
+                      <td className="px-5 py-3.5 align-middle">
+                        <div className="flex items-center gap-1.5">
                           <button
                             type="button"
                             disabled={!canMoveUp || rowBusy}
                             onClick={() => handleMove(slide, 'up')}
-                            className="grid h-7 w-7 place-items-center rounded-md border border-slate-200 bg-white text-ink-600 transition hover:bg-slate-50 disabled:opacity-40 dark:border-surface-100 dark:bg-surface-200 dark:text-slate-200"
-                            aria-label={t('admin.heroMoveUp')}
+                            className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-50 disabled:opacity-30 cursor-pointer shadow-2xs"
                             title={t('admin.heroMoveUp')}
                           >
                             ↑
@@ -158,19 +154,18 @@ export default function AdminHeroPage() {
                             type="button"
                             disabled={!canMoveDown || rowBusy}
                             onClick={() => handleMove(slide, 'down')}
-                            className="grid h-7 w-7 place-items-center rounded-md border border-slate-200 bg-white text-ink-600 transition hover:bg-slate-50 disabled:opacity-40 dark:border-surface-100 dark:bg-surface-200 dark:text-slate-200"
-                            aria-label={t('admin.heroMoveDown')}
+                            className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-50 disabled:opacity-30 cursor-pointer shadow-2xs"
                             title={t('admin.heroMoveDown')}
                           >
                             ↓
                           </button>
-                          <span className="ml-2 text-xs text-ink-400 dark:text-slate-500">
+                          <span className="ml-1 text-xs font-mono font-bold text-slate-400">
                             #{slide.sortOrder}
                           </span>
                         </div>
                       </td>
-                      <td className="px-5 py-3 align-middle">
-                        <div className="h-12 w-20 overflow-hidden rounded-lg bg-slate-100 dark:bg-surface-100">
+                      <td className="px-5 py-3.5 align-middle">
+                        <div className="h-12 w-20 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-2xs">
                           <img
                             src={slide.imageUrl}
                             alt=""
@@ -181,25 +176,31 @@ export default function AdminHeroPage() {
                           />
                         </div>
                       </td>
-                      <td className="px-5 py-3 align-middle">
-                        <p className="max-w-xs truncate font-mono text-xs text-ink-700 dark:text-slate-200">
+                      <td className="px-5 py-3.5 align-middle">
+                        <p className="max-w-md truncate font-mono text-xs text-slate-600 dark:text-slate-300">
                           {slide.imageUrl}
                         </p>
                       </td>
-                      <td className="px-5 py-3 align-middle">
+                      <td className="px-5 py-3.5 align-middle">
                         {slide.isActive ? (
-                          <span className="badge-success">{t('admin.statusActive')}</span>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300 px-2.5 py-0.5 text-[11px] font-bold">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                            {t('admin.statusActive')}
+                          </span>
                         ) : (
-                          <span className="badge-warning">{t('admin.statusLocked')}</span>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 px-2.5 py-0.5 text-[11px] font-semibold">
+                            <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                            {t('admin.statusLocked')}
+                          </span>
                         )}
                       </td>
-                      <td className="px-5 py-3 align-middle">
+                      <td className="px-5 py-3.5 align-middle text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
                             type="button"
                             onClick={() => handleToggleActive(slide)}
                             disabled={rowBusy}
-                            className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-ink-700 transition hover:bg-slate-50 disabled:opacity-50 dark:border-surface-100 dark:bg-surface-200 dark:text-slate-200 dark:hover:bg-surface-100"
+                            className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer disabled:opacity-40"
                           >
                             {slide.isActive ? t('admin.heroDeactivate') : t('admin.heroActivate')}
                           </button>
@@ -207,7 +208,7 @@ export default function AdminHeroPage() {
                             type="button"
                             onClick={() => setDraft({ open: true, src: slide })}
                             disabled={rowBusy}
-                            className="rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700 transition hover:bg-brand-100 disabled:opacity-50 dark:border-brand-700/40 dark:bg-brand-900/30 dark:text-brand-200 dark:hover:bg-brand-900/50"
+                            className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/50 px-3 py-1.5 text-xs font-bold text-blue-700 dark:text-cyan-300 hover:bg-blue-100 cursor-pointer disabled:opacity-40"
                           >
                             {t('admin.heroEdit')}
                           </button>
@@ -215,9 +216,9 @@ export default function AdminHeroPage() {
                             type="button"
                             onClick={() => handleDelete(slide)}
                             disabled={rowBusy}
-                            className="btn-danger disabled:opacity-50"
+                            className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-400 cursor-pointer disabled:opacity-40"
                           >
-                            {t('admin.deleteUser')}
+                            {t('common.delete')}
                           </button>
                         </div>
                       </td>
@@ -226,6 +227,10 @@ export default function AdminHeroPage() {
                 })}
               </tbody>
             </table>
+          </div>
+
+          <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <span>Hiển thị <strong>{slides.length}</strong> slide trình chiếu</span>
           </div>
         </div>
       )}
@@ -279,7 +284,7 @@ function HeroSlideFormModal({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 px-4 py-6 backdrop-blur-sm dark:bg-black/70"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs"
       role="dialog"
       aria-modal="true"
       onClick={(e) => {
@@ -288,19 +293,21 @@ function HeroSlideFormModal({
     >
       <form
         onSubmit={handleSubmit}
-        className="card w-full max-w-md space-y-4 p-6 shadow-xl"
+        className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl p-6 space-y-4"
       >
-        <h2 className="text-lg font-semibold text-ink-900 dark:text-slate-100">
-          {src ? t('admin.heroEditTitle') : t('admin.heroAddTitle')}
-        </h2>
-        <p className="text-xs text-ink-500 dark:text-slate-400">
-          {t('admin.heroFormHint')}
-        </p>
+        <div>
+          <h2 className="text-base font-bold text-slate-900 dark:text-white">
+            {src ? t('admin.heroEditTitle') : t('admin.heroAddTitle')}
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            {t('admin.heroFormHint')}
+          </p>
+        </div>
 
-        <label className="block">
-          <span className="text-xs font-medium text-ink-700 dark:text-slate-200">
+        <div>
+          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
             {t('admin.heroUrlLabel')}
-          </span>
+          </label>
           <input
             type="url"
             value={url}
@@ -308,21 +315,21 @@ function HeroSlideFormModal({
             placeholder="https://images.unsplash.com/photo-..."
             required
             autoFocus
-            className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-surface-100 dark:bg-surface-200 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-brand-400 dark:focus:ring-brand-900/40"
+            className="w-full h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 px-3.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/15 transition"
           />
           {touched && !valid && (
-            <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">
+            <p className="mt-1 text-xs text-rose-500 font-medium">
               {t('admin.heroUrlInvalid')}
             </p>
           )}
-        </label>
+        </div>
 
         {valid && (
-          <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-surface-100">
+          <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 h-40 shadow-xs">
             <img
               src={url}
               alt=""
-              className="h-40 w-full object-cover"
+              className="h-full w-full object-cover"
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).style.opacity = '0.3';
               }}
@@ -330,11 +337,11 @@ function HeroSlideFormModal({
           </div>
         )}
 
-        <div className="flex items-center justify-end gap-2 pt-2">
+        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
           <button
             type="button"
             onClick={onClose}
-            className="btn-ghost"
+            className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 cursor-pointer"
             disabled={submitting}
           >
             {t('common.cancel')}
@@ -342,7 +349,7 @@ function HeroSlideFormModal({
           <button
             type="submit"
             disabled={submitting || !valid}
-            className="btn-primary disabled:opacity-50"
+            className="rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-2 text-xs font-bold text-white shadow-xs transition disabled:opacity-50 cursor-pointer"
           >
             {submitting ? t('admin.saving') : t('common.save')}
           </button>

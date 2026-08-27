@@ -135,39 +135,35 @@ export default function AdminUsersPage() {
   if (!users) return <LoadingState message={t('admin.usersLoading')} />;
 
   return (
-    <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold text-ink-900 dark:text-slate-100">
-          {t('admin.usersTitle')}
-        </h1>
-        <p className="mt-1 text-sm text-ink-500 dark:text-slate-400">
-          {t('admin.usersSubtitle', { count: users.length })}
-        </p>
-      </header>
+    <div className="space-y-4">
 
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[220px]">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500">
-            🔍
+      {/* Filter & Search Toolbar Card */}
+      <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#0D1527] p-3.5 shadow-xs flex flex-wrap items-center justify-between gap-3">
+        {/* Search Field */}
+        <div className="relative flex-1 min-w-[240px] max-w-md">
+          <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           </span>
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={t('admin.tripsSearchPlaceholder')}
-            className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-surface-100 dark:bg-surface-200 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-brand-400 dark:focus:ring-brand-900/40"
+            placeholder="Tìm theo họ tên, email người dùng..."
+            className="w-full h-10 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/80 pl-10 pr-3 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/15 transition"
           />
         </div>
-        <div className="flex flex-wrap gap-1 rounded-full bg-slate-100 p-1 text-xs dark:bg-surface-100">
+
+        {/* High-Contrast Segmented Status Filter Tabs */}
+        <div className="flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60">
           {(['ALL', 'ACTIVE', 'LOCKED'] as StatusFilter[]).map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => setStatusFilter(s)}
-              className={`rounded-full px-3 py-1.5 font-medium transition ${
+              className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                 statusFilter === s
-                  ? 'bg-white text-brand-700 shadow dark:bg-surface-200 dark:text-brand-300'
-                  : 'text-ink-600 hover:text-ink-900 dark:text-slate-400 dark:hover:text-slate-100'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               {t(`admin.filterStatus${s.charAt(0)}${s.slice(1).toLowerCase()}`)}
@@ -176,22 +172,21 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      <div className="card overflow-hidden">
+      {/* Users Data Table */}
+      <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800/90 bg-white dark:bg-[#0D1527] shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-ink-100 text-sm dark:divide-surface-100">
-            <thead className="bg-ink-100/40 text-left text-xs uppercase tracking-wide text-ink-500 dark:bg-surface-100 dark:text-slate-400">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50/90 dark:bg-slate-800/80 border-b border-slate-200/80 dark:border-slate-800 text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               <tr>
-                <th className="px-5 py-3 font-medium">{t('admin.colName')}</th>
-                <th className="px-5 py-3 font-medium">{t('admin.colEmail')}</th>
-                <th className="px-5 py-3 font-medium">{t('admin.colRole')}</th>
-                <th className="px-5 py-3 font-medium">{t('admin.colStatus')}</th>
-                <th className="px-5 py-3 font-medium">{t('admin.colCreated')}</th>
-                <th className="px-5 py-3 font-medium text-right">
-                  {t('admin.colActions')}
-                </th>
+                <th className="px-5 py-3.5">{t('admin.colName')}</th>
+                <th className="px-5 py-3.5">{t('admin.colEmail')}</th>
+                <th className="px-5 py-3.5">{t('admin.colRole')}</th>
+                <th className="px-5 py-3.5">{t('admin.colStatus')}</th>
+                <th className="px-5 py-3.5">{t('admin.colCreated')}</th>
+                <th className="px-5 py-3.5 text-right">{t('admin.colActions')}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-ink-100 dark:divide-surface-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
               {filtered.map((u) => {
                 const self = isSelf(u.id);
                 const lastAdmin = isLastAdmin(u);
@@ -215,38 +210,65 @@ export default function AdminUsersPage() {
                 const rowBusy = deletingId === u.id || statusChangingId === u.id;
 
                 return (
-                  <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-surface-100">
-                    <td className="px-5 py-3 font-medium text-ink-900 dark:text-slate-100">
-                      {u.name}
-                      {self && (
-                        <span className="ml-2 text-xs font-normal text-ink-500 dark:text-slate-400">
-                          {t('admin.you')}
+                  <tr
+                    key={u.id}
+                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
+                  >
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <div className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-xs font-bold text-white shadow-2xs">
+                          {(u.name?.charAt(0) || u.email.charAt(0)).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-slate-900 dark:text-white">
+                              {u.name}
+                            </span>
+                            {self && (
+                              <span className="rounded-md bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-800 px-1.5 py-0.2 text-[10px] font-bold">
+                                {t('admin.you')}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[11px] text-slate-400 font-mono sm:hidden">{u.email}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3.5 text-slate-600 dark:text-slate-300 font-mono text-xs">
+                      {u.email}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      {u.role === 'ADMIN' ? (
+                        <span className="inline-flex items-center gap-1 rounded-lg bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-800/80 text-blue-700 dark:text-cyan-300 px-2.5 py-1 text-[11px] font-bold">
+                          👑 {t('admin.roleAdmin')}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 text-[11px] font-semibold">
+                          {t('admin.roleUser')}
                         </span>
                       )}
                     </td>
-                    <td className="px-5 py-3 text-ink-700 dark:text-slate-200">{u.email}</td>
-                    <td className="px-5 py-3">
-                      {u.role === 'ADMIN' ? (
-                        <span className="badge-success">{t('admin.roleAdmin')}</span>
-                      ) : (
-                        <span className="badge">{t('admin.roleUser')}</span>
-                      )}
-                    </td>
-                    <td className="px-5 py-3">
+                    <td className="px-5 py-3.5">
                       {locked ? (
-                        <span className="badge-warning">{t('admin.statusLocked')}</span>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-950/60 border border-amber-200/80 dark:border-amber-800/60 text-amber-700 dark:text-amber-300 px-2.5 py-0.5 text-[11px] font-bold">
+                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                          {t('admin.statusLocked')}
+                        </span>
                       ) : (
-                        <span className="badge-success">{t('admin.statusActive')}</span>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300 px-2.5 py-0.5 text-[11px] font-bold">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          {t('admin.statusActive')}
+                        </span>
                       )}
                     </td>
-                    <td className="px-5 py-3 text-ink-500 dark:text-slate-400">
+                    <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400 text-xs">
                       {new Date(u.createdAt).toLocaleDateString(undefined, {
                         year: 'numeric',
                         month: 'short',
                         day: 'numeric',
                       })}
                     </td>
-                    <td className="px-5 py-3">
+                    <td className="px-5 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           type="button"
@@ -255,10 +277,10 @@ export default function AdminUsersPage() {
                           }
                           disabled={rowBusy || lockBlocked}
                           title={lockBlocked ? lockBlockedReason : undefined}
-                          className={`inline-flex items-center justify-center rounded-xl px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                          className={`rounded-lg px-3 py-1.5 text-xs font-bold border transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 ${
                             locked
-                              ? 'border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-700/30 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50'
-                              : 'border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-700/30 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50'
+                              ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                              : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
                           }`}
                         >
                           {statusChangingId === u.id
@@ -272,7 +294,7 @@ export default function AdminUsersPage() {
                           onClick={() => handleDelete(u)}
                           disabled={rowBusy || deleteBlocked}
                           title={deleteBlocked ? deleteBlockedReason : undefined}
-                          className="btn-danger disabled:cursor-not-allowed disabled:opacity-50"
+                          className="rounded-lg px-3 py-1.5 text-xs font-bold border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-400 transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           {deletingId === u.id
                             ? t('admin.deletingUser')
@@ -287,7 +309,7 @@ export default function AdminUsersPage() {
                 <tr>
                   <td
                     colSpan={6}
-                    className="px-5 py-6 text-center text-sm text-ink-500 dark:text-slate-400"
+                    className="px-5 py-10 text-center text-xs text-slate-400"
                   >
                     {t('admin.usersNoMatch')}
                   </td>
@@ -295,6 +317,11 @@ export default function AdminUsersPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Table Footer Summary */}
+        <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+          <span>Hiển thị <strong>{filtered.length}</strong> / <strong>{users.length}</strong> người dùng</span>
         </div>
       </div>
 

@@ -29,8 +29,6 @@ export default function LockUserModal({
     if (open) {
       setReason(defaultReason ?? '');
       setSubmitting(false);
-      // Focus textarea shortly after the modal mounts so the fallback
-      // animation has time to apply.
       window.setTimeout(() => inputRef.current?.focus(), 30);
     }
   }, [open, defaultReason]);
@@ -75,32 +73,30 @@ export default function LockUserModal({
     }
   };
 
-  const confirmClass = isLock
-    ? 'inline-flex items-center justify-center rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-400'
-    : 'btn-primary';
-
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 px-4 py-6 backdrop-blur-sm dark:bg-black/70"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-xs"
       role="dialog"
       aria-modal="true"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="card w-full max-w-md p-6 shadow-xl">
-        <h2 className="text-lg font-semibold text-ink-900 dark:text-slate-100">
-          {title}
-        </h2>
-        <p className="mt-2 text-sm text-ink-500 dark:text-slate-400">
-          {description}
-        </p>
+      <div className="w-full max-w-md rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl p-5 space-y-4">
+        <div>
+          <h2 className="text-base font-bold text-slate-900 dark:text-white font-sans">
+            {title}
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            {description}
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-          <label className="block">
-            <span className="text-xs font-medium text-ink-700 dark:text-slate-200">
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
               {reasonLabel}
-            </span>
+            </label>
             <textarea
               ref={inputRef}
               value={reason}
@@ -108,18 +104,18 @@ export default function LockUserModal({
               rows={3}
               maxLength={500}
               placeholder={reasonHint}
-              className="mt-1 w-full resize-none rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:border-surface-100 dark:bg-surface-200 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-brand-400 dark:focus:ring-brand-900/40"
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-2.5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 resize-none focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/10 transition"
             />
-            <span className="mt-1 block text-right text-xs text-ink-400 dark:text-slate-500">
+            <span className="mt-0.5 block text-right text-[10px] text-slate-400">
               {reason.length}/500
             </span>
-          </label>
+          </div>
 
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}
-              className="btn-ghost"
+              className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 cursor-pointer"
               disabled={submitting}
             >
               {t('common.cancel')}
@@ -127,7 +123,11 @@ export default function LockUserModal({
             <button
               type="submit"
               disabled={submitting}
-              className={`${confirmClass} disabled:opacity-50`}
+              className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition disabled:opacity-50 cursor-pointer ${
+                isLock
+                  ? 'bg-amber-600 hover:bg-amber-700'
+                  : 'bg-blue-600 hover:bg-blue-700'
+              }`}
             >
               {submitting ? t('admin.saving') : confirmLabel}
             </button>
