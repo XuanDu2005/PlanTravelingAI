@@ -22,7 +22,8 @@ export default function SessionList({
   const { t } = useTranslation();
   const confirm = useConfirm();
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     const ok = await confirm({
       title: t('chat.deleteConfirm'),
       confirmLabel: t('common.delete'),
@@ -32,62 +33,63 @@ export default function SessionList({
   };
 
   return (
-    <div className="flex h-full w-60 flex-col border-r border-ink-100 bg-white transition-colors duration-200 dark:border-surface-100 dark:bg-surface-200">
-      <div className="border-b border-ink-100 p-3 dark:border-surface-100">
+    <div className="hidden sm:flex h-full w-60 flex-col border-r border-slate-200/80 dark:border-slate-800/80 bg-slate-50/80 dark:bg-[#091122]/90 shrink-0">
+      
+      {/* Top Action */}
+      <div className="p-3 border-b border-slate-200/80 dark:border-slate-800/80">
         <button
           type="button"
           onClick={onCreate}
-          className="btn-primary w-full"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 px-3.5 py-2 text-xs font-bold text-white shadow-sm shadow-blue-500/20 transition cursor-pointer"
         >
-          <span aria-hidden>+</span>
-          <span>{t('chat.newSession')}</span>
+          <span className="text-sm font-bold leading-none">+</span>
+          <span>{t('chat.newChat')}</span>
         </button>
       </div>
-      <div className="flex-1 overflow-y-auto">
-        <h4 className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-ink-400 dark:text-slate-500">
-          {t('chat.history')}
-        </h4>
+
+      {/* Session List */}
+      <div className="flex-1 overflow-y-auto p-2 space-y-1">
         {loading ? (
-          <p className="px-3 text-xs text-ink-400 dark:text-slate-500">...</p>
+          <div className="p-4 text-center text-xs text-slate-400">{t('chat.loadingHistory')}</div>
         ) : sessions.length === 0 ? (
-          <p className="px-3 text-xs text-ink-400 dark:text-slate-500">{t('chat.noHistory')}</p>
+          <div className="p-4 text-center text-xs text-slate-400">
+            {t('chat.emptyHistory')}
+          </div>
         ) : (
-          <ul className="flex flex-col">
+          <div className="space-y-1">
             {sessions.map((s) => {
               const isActive = s.id === activeId;
               return (
-                <li
+                <div
                   key={s.id}
-                  className={`group flex items-center gap-1 border-l-2 ${
+                  onClick={() => onSelect(s.id)}
+                  className={`group relative flex items-center justify-between rounded-xl px-3 py-2 text-xs transition-all cursor-pointer ${
                     isActive
-                      ? 'border-brand-600 bg-brand-50 dark:bg-brand-900/30'
-                      : 'border-transparent hover:bg-ink-50 dark:hover:bg-surface-100'
+                      ? 'bg-white dark:bg-[#13203A] text-blue-600 dark:text-cyan-300 shadow-xs border border-slate-200/90 dark:border-blue-500/30 font-bold'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-white/70 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200 font-medium'
                   }`}
                 >
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                    <span className="truncate" title={s.title || t('chat.untitled')}>
+                      {s.title || t('chat.untitled')}
+                    </span>
+                  </div>
+
                   <button
                     type="button"
-                    onClick={() => onSelect(s.id)}
-                    className="flex-1 truncate px-3 py-2 text-left text-sm text-ink-800 dark:text-slate-200"
-                    title={s.title || t('chat.untitled')}
+                    onClick={(e) => handleDelete(s.id, e)}
+                    className="opacity-0 group-hover:opacity-100 h-5.5 w-5.5 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition shrink-0 ml-1"
+                    title={t('common.delete')}
                   >
-                    {s.title || t('chat.untitled')}
+                    <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                   </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(s.id);
-                    }}
-                    className="mr-2 hidden rounded-md p-1 text-ink-300 hover:bg-rose-50 hover:text-rose-600 group-hover:block dark:text-slate-500 dark:hover:bg-rose-900/30 dark:hover:text-rose-300"
-                    title={t('chat.deleteSession')}
-                    aria-label={t('chat.deleteSession')}
-                  >
-                    <span aria-hidden>×</span>
-                  </button>
-                </li>
+                </div>
               );
             })}
-          </ul>
+          </div>
         )}
       </div>
     </div>
