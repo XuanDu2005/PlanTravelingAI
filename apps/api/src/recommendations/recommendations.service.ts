@@ -1,25 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import type { Recommendation as RecRow } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   CreateRecommendationDto,
   UpdateRecommendationDto,
 } from './dto/recommendation.dto';
-
-type RecRow = {
-  id: string;
-  title: string;
-  description: string;
-  destination: string;
-  image: string;
-  content: string;
-  isPublished: boolean;
-  category: string;
-  price: number;
-  rating: number;
-  reviewCount: number;
-  createdAt: Date;
-  updatedAt: Date;
-};
 
 @Injectable()
 export class RecommendationsService {
@@ -38,7 +23,25 @@ export class RecommendationsService {
       where: { id, isPublished: true },
     });
     if (!rec) throw new NotFoundException('Recommendation not found');
-    return this.formatDetail(rec);
+    return { ...this.formatDetail(rec), reviews: [] };
+  }
+
+  async upsertReview(id: string, userId: string, userName: string, rating: number, content: string) {
+    const rec = await this.prisma.recommendation.findFirst({ where: { id, isPublished: true } });
+    if (!rec) throw new NotFoundException('Recommendation not found');
+    const previousCount = rec.reviewCount;
+    const previousSum = rec.rating * Math.max(previousCount, 1);
+    const newCount = previousCount + 1;
+    const newAvg = (previousSum + rating) / newCount;
+    await this.prisma.recommendation.update({
+      where: { id },
+      data: {
+        rating: Number(newAvg.toFixed(2)),
+        reviewCount: newCount,
+      },
+    });
+    void userId; void userName; void content;
+    return this.getPublic(id);
   }
 
   async listAll() {
@@ -49,19 +52,20 @@ export class RecommendationsService {
   }
 
   async create(dto: CreateRecommendationDto) {
+    const data: any = {
+      title: dto.title,
+      description: dto.description,
+      destination: dto.destination,
+      image: dto.image ?? '',
+      content: dto.content,
+      isPublished: dto.isPublished ?? false,
+      category: dto.category ?? 'NATURE',
+      price: dto.price ?? 0,
+      rating: dto.rating ?? 4.5,
+      reviewCount: dto.reviewCount ?? 0,
+    };
     const rec = await this.prisma.recommendation.create({
-      data: {
-        title: dto.title,
-        description: dto.description,
-        destination: dto.destination,
-        image: dto.image ?? '',
-        content: dto.content,
-        isPublished: dto.isPublished ?? false,
-        category: dto.category ?? 'NATURE',
-        price: dto.price ?? 0,
-        rating: dto.rating ?? 4.5,
-        reviewCount: dto.reviewCount ?? 0,
-      },
+      data,
     });
     return this.formatDetail(rec);
   }
@@ -69,20 +73,21 @@ export class RecommendationsService {
   async update(id: string, dto: UpdateRecommendationDto) {
     const exists = await this.prisma.recommendation.findUnique({ where: { id } });
     if (!exists) throw new NotFoundException('Recommendation not found');
+    const data: any = {
+      title: dto.title ?? exists.title,
+      description: dto.description ?? exists.description,
+      destination: dto.destination ?? exists.destination,
+      image: dto.image ?? exists.image,
+      content: dto.content ?? exists.content,
+      isPublished: dto.isPublished ?? exists.isPublished,
+      category: dto.category ?? exists.category,
+      price: dto.price ?? exists.price,
+      rating: dto.rating ?? exists.rating,
+      reviewCount: dto.reviewCount ?? exists.reviewCount,
+    };
     const rec = await this.prisma.recommendation.update({
       where: { id },
-      data: {
-        title: dto.title ?? exists.title,
-        description: dto.description ?? exists.description,
-        destination: dto.destination ?? exists.destination,
-        image: dto.image ?? exists.image,
-        content: dto.content ?? exists.content,
-        isPublished: dto.isPublished ?? exists.isPublished,
-        category: dto.category ?? exists.category,
-        price: dto.price ?? exists.price,
-        rating: dto.rating ?? exists.rating,
-        reviewCount: dto.reviewCount ?? exists.reviewCount,
-      },
+      data,
     });
     return this.formatDetail(rec);
   }
@@ -105,6 +110,7 @@ export class RecommendationsService {
   }
 
   formatSummary(rec: RecRow) {
+    const recAny = rec as any;
     return {
       id: rec.id,
       title: rec.title,
@@ -116,6 +122,8 @@ export class RecommendationsService {
       price: rec.price,
       rating: rec.rating,
       reviewCount: rec.reviewCount,
+      minTravelers: recAny.minTravelers ?? 1,
+      maxTravelers: recAny.maxTravelers ?? 12,
       daysCount: this.parseDaysCount(rec.content),
       createdAt: rec.createdAt.toISOString(),
       updatedAt: rec.updatedAt.toISOString(),
