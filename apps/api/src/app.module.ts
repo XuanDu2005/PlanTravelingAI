@@ -10,6 +10,8 @@ import { AdminModule } from './admin/admin.module';
 import { ChatModule } from './chat/chat.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { HeroModule } from './hero/hero.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { WeatherModule } from './weather/weather.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -28,6 +30,8 @@ import { HealthController } from './health.controller';
     ChatModule,
     FavoritesModule,
     HeroModule,
+    NotificationsModule,
+    WeatherModule,
   ],
   controllers: [HealthController],
 })
