@@ -212,6 +212,10 @@ export default function ChatWidget() {
     [activeSessionId, loadMessages, sessions, t],
   );
 
+  const handleRenamedSession = useCallback((updated: ChatSessionSummary) => {
+    setSessions((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+  }, []);
+
   const handleSend = useCallback(
     async (content: string) => {
       let sessionId = activeSessionId;
@@ -348,6 +352,7 @@ export default function ChatWidget() {
           await handleDeleteSession(id);
         }}
         onSend={handleSend}
+        onRenamedSession={handleRenamedSession}
       />
     </>
   );

@@ -6,13 +6,14 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { JwtAuthGuard, JwtUser } from '../common/guards/jwt-auth.guard';
 import { ChatService } from './chat.service';
-import { SendMessageDto } from './dto/chat.dto';
+import { SendMessageDto, UpdateSessionDto } from './dto/chat.dto';
 
 @Controller('chat')
 @UseGuards(JwtAuthGuard)
@@ -48,5 +49,14 @@ export class ChatController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@CurrentUser() user: JwtUser, @Param('id') id: string) {
     await this.chat.deleteSession(user.sub, id);
+  }
+
+  @Patch('sessions/:id')
+  update(
+    @CurrentUser() user: JwtUser,
+    @Param('id') id: string,
+    @Body() dto: UpdateSessionDto,
+  ) {
+    return this.chat.updateSession(user.sub, id, dto);
   }
 }

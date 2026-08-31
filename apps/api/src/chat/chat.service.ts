@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { AiChatMessage } from '../ai/ai.types';
 import { CHAT_HISTORY_LIMIT, CHAT_SYSTEM_PROMPT } from './chat.constants';
-import { SendMessageDto } from './dto/chat.dto';
+import { SendMessageDto, UpdateSessionDto } from './dto/chat.dto';
 
 @Injectable()
 export class ChatService {
@@ -103,6 +103,16 @@ export class ChatService {
   async deleteSession(userId: string, sessionId: string) {
     await this.ensureSession(userId, sessionId);
     await this.prisma.chatSession.delete({ where: { id: sessionId } });
+  }
+
+  async updateSession(userId: string, sessionId: string, dto: UpdateSessionDto) {
+    await this.ensureSession(userId, sessionId);
+    const title = dto.title.trim();
+    return this.prisma.chatSession.update({
+      where: { id: sessionId },
+      data: { title: title.slice(0, 120) },
+      select: { id: true, title: true, updatedAt: true, createdAt: true },
+    });
   }
 
   private async ensureSession(userId: string, sessionId: string) {

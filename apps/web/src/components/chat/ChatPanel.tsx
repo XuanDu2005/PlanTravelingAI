@@ -21,6 +21,7 @@ interface Props {
   onCreateSession: () => Promise<string | null>;
   onDeleteSession: (id: string) => Promise<void>;
   onSend: (content: string) => Promise<void>;
+  onRenamedSession: (session: ChatSessionSummary) => void;
 }
 
 export default function ChatPanel({
@@ -36,6 +37,7 @@ export default function ChatPanel({
   onCreateSession,
   onDeleteSession,
   onSend,
+  onRenamedSession,
 }: Props) {
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -72,6 +74,7 @@ export default function ChatPanel({
         onDelete={(id) => {
           void onDeleteSession(id);
         }}
+        onRenamed={onRenamedSession}
       />
 
       {/* 2. Main Chat Conversation Area */}
