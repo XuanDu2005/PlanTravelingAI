@@ -184,51 +184,58 @@ export class GeminiAiProvider implements AiProvider {
       'gemini-2.5-flash';
 
     if (!apiKey) {
-      throw new Error(
-        'GeminiAiProvider selected but AI_API_KEY is not configured. ' +
-          'Get a free key at https://aistudio.google.com/apikey and set AI_API_KEY in .env.',
+      this.logger.warn(
+        'AI_API_KEY is not configured for chat; falling back to MockAiProvider.',
       );
+      return new MockAiProvider().chat(messages);
     }
 
-    const { systemInstruction, contents } = this.toGeminiContents(messages);
-    const url = `${GEMINI_ENDPOINT}/models/${encodeURIComponent(model)}:generateContent`;
-    const body: Record<string, unknown> = {
-      contents,
-      generationConfig: {
-        temperature: 0.7,
-        topP: 0.9,
-        topK: 40,
-        maxOutputTokens: 1024,
-      },
-    };
-    if (systemInstruction) {
-      body.systemInstruction = { role: 'system', parts: [{ text: systemInstruction }] };
-    }
+    try {
+      const { systemInstruction, contents } = this.toGeminiContents(messages);
+      const url = `${GEMINI_ENDPOINT}/models/${encodeURIComponent(model)}:generateContent`;
+      const body: Record<string, unknown> = {
+        contents,
+        generationConfig: {
+          temperature: 0.7,
+          topP: 0.9,
+          topK: 40,
+          maxOutputTokens: 1024,
+        },
+      };
+      if (systemInstruction) {
+        body.systemInstruction = { role: 'system', parts: [{ text: systemInstruction }] };
+      }
 
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-goog-api-key': apiKey,
-      },
-      body: JSON.stringify(body),
-    });
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-goog-api-key': apiKey,
+        },
+        body: JSON.stringify(body),
+      });
 
-    if (!res.ok) {
-      const text = await res.text();
-      this.logger.error(`Gemini chat HTTP ${res.status}: ${text.slice(0, 400)}`);
-      throw new Error(`Gemini chat request failed with status ${res.status}`);
-    }
+      if (!res.ok) {
+        const text = await res.text();
+        this.logger.error(`Gemini chat HTTP ${res.status}: ${text.slice(0, 400)}`);
+        throw new Error(`Gemini chat request failed with status ${res.status}`);
+      }
 
-    const data = (await res.json()) as GeminiResponse;
-    if (data.error) {
-      throw new Error(`Gemini API error: ${data.error.message}`);
+      const data = (await res.json()) as GeminiResponse;
+      if (data.error) {
+        throw new Error(`Gemini API error: ${data.error.message}`);
+      }
+      const parts = data.candidates?.[0]?.content?.parts;
+      if (!parts || parts.length === 0) {
+        throw new Error('Gemini returned no content');
+      }
+      return parts.map((p) => p.text ?? '').join('').trim();
+    } catch (err) {
+      this.logger.warn(
+        `Gemini chat failed, falling back to MockAiProvider: ${(err as Error).message}`,
+      );
+      return new MockAiProvider().chat(messages);
     }
-    const parts = data.candidates?.[0]?.content?.parts;
-    if (!parts || parts.length === 0) {
-      throw new Error('Gemini returned no content');
-    }
-    return parts.map((p) => p.text ?? '').join('').trim();
   }
 
   private toGeminiContents(messages: AiChatMessage[]): {
