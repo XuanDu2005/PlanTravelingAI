@@ -3,6 +3,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  Max,
   Min,
   MinLength,
 } from 'class-validator';
@@ -20,10 +21,18 @@ export class CreateTripDto {
 
   @IsInt()
   @Min(1)
+  @Max(50)
   travelers!: number;
 
-  @IsString()
-  budget!: string;
+  /**
+   * Raw budget amount in VND (e.g. 5000000 for 5 million). Frontend must send
+   * the raw integer, not a formatted string. Bounds are wide enough to cover
+   * anything from a backpacker weekend to a luxury week-long trip.
+   */
+  @IsInt()
+  @Min(0)
+  @Max(2_000_000_000)
+  budget!: number;
 
   @IsOptional()
   @IsString()
