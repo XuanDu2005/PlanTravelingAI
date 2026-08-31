@@ -29,6 +29,8 @@ export class CreateRecommendationDto {
   @IsOptional() @IsInt() @Min(0) price?: number;
   @IsOptional() @IsNumber() @Min(0) @Max(5) rating?: number;
   @IsOptional() @IsInt() @Min(0) reviewCount?: number;
+  @IsOptional() @IsInt() @Min(1) minTravelers?: number;
+  @IsOptional() @IsInt() @Min(1) maxTravelers?: number;
 }
 
 export class UpdateRecommendationDto {
@@ -42,4 +44,6 @@ export class UpdateRecommendationDto {
   @IsOptional() @IsInt() @Min(0) price?: number;
   @IsOptional() @IsNumber() @Min(0) @Max(5) rating?: number;
   @IsOptional() @IsInt() @Min(0) reviewCount?: number;
+  @IsOptional() @IsInt() @Min(1) minTravelers?: number;
+  @IsOptional() @IsInt() @Min(1) maxTravelers?: number;
 }

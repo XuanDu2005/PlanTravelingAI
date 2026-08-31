@@ -6,6 +6,7 @@
   "scripts": {
     "dev:api": "pnpm --filter @travelmind/api start:dev",
     "dev:web": "pnpm --filter @travelmind/web dev",
+    "build": "pnpm build:api && pnpm build:web",
     "build:api": "pnpm --filter @travelmind/api build",
     "build:web": "pnpm --filter @travelmind/web build",
     "typecheck": "pnpm -r run typecheck",

@@ -1,0 +1,14 @@
+{
+  "name": "TravelMind - AI Travel Planner",
+  "short_name": "TravelMind",
+  "description": "Lập kế hoạch, quản lý và đồng hành trong mọi chuyến đi.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050b18",
+  "theme_color": "#2563eb",
+  "lang": "vi",
+  "icons": [
+    { "src": "/favicon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/favicon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

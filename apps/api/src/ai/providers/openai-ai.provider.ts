@@ -6,8 +6,11 @@ import {
   GeneratedItinerary,
   ItineraryActivity,
   ItineraryDay,
+  PackingItemSuggestion,
+  PackingListInput,
   TripItineraryInput,
 } from '../ai.types';
+import { buildBasicPackingList } from './basic-packing';
 
 /**
  * Placeholder OpenAI provider implementation.
@@ -113,6 +116,33 @@ export class OpenAiProvider implements AiProvider {
       ],
     };
   }
+
+  async generatePackingList(input: PackingListInput): Promise<PackingItemSuggestion[]> {
+    const system = 'Bạn là trợ lý du lịch. Trả về JSON thuần (không kèm markdown) là một mảng các object {name, category, quantity}. name là tiếng Việt, category thuộc: Giấy tờ, Trang phục, Cá nhân, Sức khoẻ, Điện tử. quantity là số nguyên >= 1.';
+    const user = `Hãy gợi ý danh sách đồ cần mang cho chuyến đi: điểm đến "${input.destination}", ${input.daysCount} ngày, ${input.travelers} người. Sở thích/yêu cầu: ${input.preferences || 'không có'}. Tối đa 25 món.`;
+    try {
+      const content = await this.chat([
+        { role: 'system', content: system },
+        { role: 'user', content: user },
+      ]);
+      const parsed = extractJson(content);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed
+          .map((item: any) => ({
+            name: String(item?.name ?? '').trim(),
+            category: String(item?.category ?? 'Khác').trim(),
+            quantity: Math.max(1, Number(item?.quantity) || 1),
+          }))
+          .filter((item) => item.name.length > 0);
+      }
+      this.logger.warn(
+        `OpenAI packing response was empty or unparseable, using basic checklist fallback.`,
+      );
+    } catch (err) {
+      this.logger.warn(`OpenAI packing generation failed: ${(err as Error).message}`);
+    }
+    return buildBasicPackingList(input);
+  }
 }
 
 function placeholderDay(input: TripItineraryInput): ItineraryActivity[] {
@@ -153,5 +183,43 @@ function placeholderDay(input: TripItineraryInput): ItineraryActivity[] {
       imageUrl: `https://source.unsplash.com/800x600/?${destSlug}`,
       category: 'FOOD',
     },
+  ];
+}
+
+function extractJson(text: string): unknown {
+  const trimmed = text.trim();
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const raw = fenced ? fenced[1] : trimmed;
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+    if (parsed && typeof parsed === 'object') {
+      const obj = parsed as Record<string, unknown>;
+      const candidates = [obj.items, obj.data, obj.packing, obj.result, obj.list];
+      for (const c of candidates) {
+        if (Array.isArray(c)) return c;
+      }
+    }
+    return [];
+  } catch {
+    const first = raw.indexOf('[');
+    const last = raw.lastIndexOf(']');
+    if (first !== -1 && last !== -1 && last > first) {
+      try { return JSON.parse(raw.slice(first, last + 1)); } catch { /* ignore */ }
+    }
+    return [];
+  }
+}
+
+function fallbackPacking(input: PackingListInput): PackingItemSuggestion[] {
+  const days = Math.max(1, input.daysCount);
+  return [
+    { name: 'CMND/CCCD hoặc Hộ chiếu', category: 'Giấy tờ', quantity: 1 },
+    { name: 'Áo thun', category: 'Trang phục', quantity: Math.min(7, days) },
+    { name: 'Quần short', category: 'Trang phục', quantity: Math.ceil(days / 2) },
+    { name: 'Đồ lót', category: 'Trang phục', quantity: days + 1 },
+    { name: 'Kem chống nắng', category: 'Cá nhân', quantity: 1 },
+    { name: 'Điện thoại + sạc', category: 'Điện tử', quantity: 1 },
+    { name: 'Pin dự phòng', category: 'Điện tử', quantity: 1 },
   ];
 }

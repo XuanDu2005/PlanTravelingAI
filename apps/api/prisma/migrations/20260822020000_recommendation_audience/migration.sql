@@ -1,0 +1,4 @@
+ALTER TABLE "recommendations"
+ADD COLUMN "minTravelers" INTEGER NOT NULL DEFAULT 1,
+ADD COLUMN "maxTravelers" INTEGER NOT NULL DEFAULT 12;
+

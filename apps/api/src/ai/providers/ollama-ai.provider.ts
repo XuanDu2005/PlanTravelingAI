@@ -6,8 +6,12 @@ import {
   GeneratedItinerary,
   ItineraryActivity,
   ItineraryDay,
+  PackingItemSuggestion,
+  PackingListInput,
   TripItineraryInput,
 } from '../ai.types';
+import { buildBasicPackingList } from './basic-packing';
+import { computeBudgetBreakdown, TIER_GUIDANCE } from '../budget';
 
 /**
  * Ollama provider. Connects to a locally running Ollama server
@@ -91,57 +95,30 @@ export class OllamaAiProvider implements AiProvider {
 
   private buildPrompt(input: TripItineraryInput): string {
     const days = this.diffDays(input.startDate, input.endDate);
-    const prefs = input.preferences?.trim() || 'khong co yeu cau cu the';
+    const prefs = input.preferences?.trim() || 'khong co';
+    const breakdown = computeBudgetBreakdown(input);
 
-    return `Ban la chuyen gia lap ke hoach du lich Viet Nam. Hay xay dung lich trinh chi tiet bang TIENG VIET, tra ve JSON.
+    return `Ban la chuyen gia du lich Viet Nam. Tao lich trinh ${days} ngay cho ${input.destination} bang TIENG VIET, tra ve JSON thuan (KHONG markdown).
 
-=== THONG TIN CHUYEN DI ===
-- Diem den: ${input.destination}
-- Ngay bat dau: ${input.startDate}
-- Ngay ket thuc: ${input.endDate}
-- So ngay: ${days}
-- So nguoi: ${input.travelers}
-- Ngan sach: ${input.budget}
+THONG TIN:
+- Den: ${input.destination}
+- Nguoi: ${input.travelers} | Budget tong: ${breakdown.totalLabel}
+- Moi nguoi/ngay: ${breakdown.perPersonPerDayLabel}
+- Phan khuc: ${breakdown.tier.toUpperCase()}
 - So thich: ${prefs}
 
-=== YEU CAU ===
-- TOAN BO noi dung TIENG VIET.
-- Tra ve CHINH XAC JSON khong kem markdown.
+PHAN KHUC ${breakdown.tier.toUpperCase()} (BAT BUOC):
+${TIER_GUIDANCE[breakdown.tier]}
 
-=== FORMAT ===
-{
-  "title": "Tieu de bang tieng Viet",
-  "summary": "Tom tat 2-3 cau bang tieng Viet",
-  "coverImage": "URL hinh anh dai dien (Unsplash 1200x800)",
-  "days": [
-    {
-      "day": number,
-      "date": "YYYY-MM-DD",
-      "theme": "Chu de ngan gon (tieng Viet)",
-      "activities": [
-        {
-          "time": "HH:MM",
-          "title": "Ten hoat dong",
-          "description": "Mo ta chi tiet 2-3 cau",
-          "location": "Dia diem cu the",
-          "estimatedCost": "Chi phi VND",
-          "transport": "Cach di chuyen",
-          "imageUrl": "URL anh Unsplash 800x600",
-          "category": "FOOD|SIGHTSEEING|CULTURE|NATURE|SHOPPING|RELAX|NIGHTLIFE|TRANSPORT"
-        }
-      ]
-    }
-  ],
-  "tips": ["Meo 1 tieng Viet", "Meo 2 tieng Viet", "Meo 3 tieng Viet"]
-}
+RANG BUOC:
+- Moi activity ghi estimatedCost theo dinh dang "250000 VND/nguoi" (so nguyen + VND/nguoi, KHONG cham ngan cach).
+- Tong chi moi ngay (chia ${input.travelers} nguoi) phai GAN ${breakdown.perPersonPerDayLabel}/nguoi/ngay.
+- Moi ngay co 3-4 activities. Mo ta ngan gon 1-2 cau.
+- Dia diem thuc te, kha thi voi "${input.destination}".
+- Tieng Viet cho moi noi dung. estimatedCost la chi phi CHO 1 NGUOI.
 
-=== QUY TAC ===
-- Tao CHINH XAC ${days} ngay.
-- Moi ngay 4-6 hoat dong (sang, trua, chieu, toi).
-- Dia diem THUC TE, kha thi voi "${input.destination}".
-- imageUrl: https://source.unsplash.com/800x600/?<keyword-khong-dau>
-- estimatedCost cu the (so tien VND).
-- JSON hop le, KHONG markdown.`;
+JSON FORMAT:
+{"title":"...","summary":"...","coverImage":null,"days":[{"day":1,"date":"YYYY-MM-DD","theme":"...","activities":[{"time":"HH:MM","title":"...","description":"...","location":"...","estimatedCost":"<so> VND/nguoi","transport":"...","category":"FOOD|SIGHTSEEING|CULTURE|NATURE|SHOPPING|RELAX|NIGHTLIFE|TRANSPORT"}]}],"tips":["...","...","..."]}`;
   }
 
   private async callOllama(
@@ -157,7 +134,7 @@ export class OllamaAiProvider implements AiProvider {
       options: {
         temperature: 0.5,
         top_p: 0.9,
-        num_predict: 4096,
+        num_predict: 8192,
       },
       format: 'json',
     };
@@ -317,4 +294,69 @@ export class OllamaAiProvider implements AiProvider {
       .toISOString()
       .slice(0, 10);
   }
+
+  async generatePackingList(input: PackingListInput): Promise<PackingItemSuggestion[]> {
+    const system = 'Bạn là trợ lý du lịch. Trả về JSON thuần là một mảng các object {name, category, quantity}. name tiếng Việt, category thuộc: Giấy tờ, Trang phục, Cá nhân, Sức khoẻ, Điện tử. quantity là số nguyên >= 1.';
+    const user = `Gợi ý đồ cần mang cho chuyến đi: điểm đến "${input.destination}", ${input.daysCount} ngày, ${input.travelers} người. Sở thích: ${input.preferences || 'không có'}. Tối đa 25 món.`;
+    try {
+      const content = await this.chat([
+        { role: 'system', content: system },
+        { role: 'user', content: user },
+      ]);
+      const parsed = extractPacking(content);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed
+          .map((item: any) => ({
+            name: String(item?.name ?? '').trim(),
+            category: String(item?.category ?? 'Khác').trim(),
+            quantity: Math.max(1, Number(item?.quantity) || 1),
+          }))
+          .filter((item) => item.name.length > 0);
+      }
+      this.logger.warn(
+        `Ollama packing response was empty or unparseable, using basic checklist fallback.`,
+      );
+    } catch (err) {
+      this.logger.warn(`Ollama packing generation failed: ${(err as Error).message}`);
+    }
+    return buildBasicPackingList(input);
+  }
+}
+
+function extractPacking(text: string): unknown {
+  const trimmed = text.trim();
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const raw = fenced ? fenced[1] : trimmed;
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+    if (parsed && typeof parsed === 'object') {
+      const obj = parsed as Record<string, unknown>;
+      const candidates = [obj.items, obj.data, obj.packing, obj.result, obj.list];
+      for (const c of candidates) {
+        if (Array.isArray(c)) return c;
+      }
+    }
+    return [];
+  } catch {
+    const first = raw.indexOf('[');
+    const last = raw.lastIndexOf(']');
+    if (first !== -1 && last !== -1 && last > first) {
+      try { return JSON.parse(raw.slice(first, last + 1)); } catch { /* ignore */ }
+    }
+    return [];
+  }
+}
+
+function fallbackPacking(input: PackingListInput): PackingItemSuggestion[] {
+  const days = Math.max(1, input.daysCount);
+  return [
+    { name: 'CMND/CCCD hoặc Hộ chiếu', category: 'Giấy tờ', quantity: 1 },
+    { name: 'Áo thun', category: 'Trang phục', quantity: Math.min(7, days) },
+    { name: 'Quần short', category: 'Trang phục', quantity: Math.ceil(days / 2) },
+    { name: 'Đồ lót', category: 'Trang phục', quantity: days + 1 },
+    { name: 'Kem chống nắng', category: 'Cá nhân', quantity: 1 },
+    { name: 'Điện thoại + sạc', category: 'Điện tử', quantity: 1 },
+    { name: 'Pin dự phòng', category: 'Điện tử', quantity: 1 },
+  ];
 }
