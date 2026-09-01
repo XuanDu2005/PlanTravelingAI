@@ -174,13 +174,18 @@ export default function FeaturedTrips() {
             <p className="mt-1 text-sm text-slate-500">{t('home.emptyRecsDesc')}</p>
           </StatusPanel>
         ) : viewMode === 'grid' ? (
-          <div key={`${selectedCategory}-${sortBy}-${currentPage}`} className="grid w-full grid-cols-1 gap-4 lg:grid-cols-12">
-            <div className="featured-trip-enter min-h-[430px] lg:col-span-5 lg:min-h-0">
-              <TripCard trip={asCard(spotlight)} variant="spotlight" />
+          <div key={`${selectedCategory}-${sortBy}-${currentPage}`} className="flex w-full flex-row gap-3 overflow-hidden">
+            <div className="featured-trip-enter flex flex-1 transition-all duration-500 ease-out hover:z-30 hover:flex-[2_2_0%]">
+              <TripCard trip={asCard(spotlight)} variant="compact" />
             </div>
-            <div className={`lg:col-span-7 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 ${secondaryTrips.length > 3 ? 'lg:grid-rows-2' : 'lg:grid-rows-1'}`}>
+            {secondaryTrips.map((trip, index) => (
+              <div key={trip.id} className="featured-trip-enter hidden flex-1 transition-all duration-500 ease-out hover:z-30 hover:flex-[2_2_0%] lg:flex" style={{ animationDelay: `${(index + 1) * 65}ms` }}>
+                <TripCard trip={asCard(trip)} variant="compact" />
+              </div>
+            ))}
+            <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:hidden">
               {secondaryTrips.map((trip, index) => (
-                <div key={trip.id} className="featured-trip-enter min-h-[205px] lg:min-h-0" style={{ animationDelay: `${(index + 1) * 65}ms` }}>
+                <div key={trip.id} className="featured-trip-enter min-h-[220px]" style={{ animationDelay: `${(index + 1) * 65}ms` }}>
                   <TripCard trip={asCard(trip)} variant="compact" />
                 </div>
               ))}
