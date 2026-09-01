@@ -1,12 +1,13 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { recommendationService } from '@/services';
-import { Recommendation } from '@/types';
+import { Recommendation, RecommendationReview } from '@/types';
 import ItineraryView from '@/components/ItineraryView';
 import LoadingState from '@/components/LoadingState';
 import ErrorState from '@/components/ErrorState';
 import { useAuth } from '@/store/AuthContext';
+import { localReviews } from '@/store/localReviews';
 import toast from 'react-hot-toast';
 
 export default function RecommendationDetailPage() {
@@ -19,6 +20,55 @@ export default function RecommendationDetailPage() {
   const [rating, setRating] = useState(5);
   const [review, setReview] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showAllReviews, setShowAllReviews] = useState(false);
+
+  const INITIAL_REVIEWS = 5;
+  const COLLAPSED_HEIGHT = '440px';
+
+  /**
+   * Merge backend response with locally persisted reviews.
+   * The API only returns review aggregates (count + avg rating); review
+   * content is stored client-side per recommendation.
+   */
+  const mergeReviews = (recommendation: Recommendation): Recommendation => {
+    const local = localReviews.list(recommendation.id);
+    const remote = recommendation.reviews ?? [];
+    const seen = new Set<string>();
+    const merged = [...local, ...remote].filter((item) => {
+      const key = `${item.userName}|${item.content}|${item.createdAt}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    merged.sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+
+    // Recompute the average rating from the actual review set so local-only
+    // reviews are reflected in the header (the backend aggregate may be
+    // stale or missing when reviews were added from a different device).
+    const computedAverage =
+      merged.length > 0
+        ? Number(
+            (
+              merged.reduce((sum, item) => sum + item.rating, 0) / merged.length
+            ).toFixed(2),
+          )
+        : recommendation.rating;
+
+    return {
+      ...recommendation,
+      reviews: merged,
+      reviewCount: Math.max(recommendation.reviewCount, merged.length),
+      rating: computedAverage,
+    };
+  };
+
+  const reviews = rec?.reviews ?? [];
+  const visibleReviews = useMemo(
+    () => (showAllReviews ? reviews : reviews.slice(0, INITIAL_REVIEWS)),
+    [reviews, showAllReviews],
+  );
+  const hiddenCount = Math.max(reviews.length - INITIAL_REVIEWS, 0);
+  const canExpand = reviews.length > INITIAL_REVIEWS;
 
   const submitReview = async (event: FormEvent) => {
     event.preventDefault();
@@ -26,7 +76,54 @@ export default function RecommendationDetailPage() {
     setSubmitting(true);
     try {
       const updated = await recommendationService.review(id, rating, review);
-      setRec(updated);
+      // Build the optimistic review entry so the list updates even if the
+      // backend response does not include the freshly created review.
+      const optimisticReview: RecommendationReview = {
+        id: `${updated.id}-review-${Date.now()}`,
+        recommendationId: updated.id,
+        userId: user?.id ?? 'self',
+        userName: user?.name || user?.email || t('reviews.anonymous'),
+        rating,
+        content: review,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      // Persist to local storage so the review survives page reloads (the
+      // backend intentionally stores only review aggregates, not content).
+      localReviews.add(updated.id, optimisticReview);
+      setRec((prev) => {
+        const base = prev ?? updated;
+        const local = localReviews.list(updated.id);
+        const seen = new Set<string>();
+        const merged = [...local, ...(updated.reviews ?? [])].filter((item) => {
+          const key = `${item.userName}|${item.content}|${item.createdAt}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+        merged.sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+        // Always recompute the average from the reviews we actually render.
+        // The backend aggregate is kept across many submissions that we
+        // cannot see client-side (review content is not persisted on the
+        // server), so trusting it would make the header disagree with the
+        // visible cards.
+        const fallbackRating =
+          merged.length > 0
+            ? Number(
+                (
+                  merged.reduce((sum, item) => sum + item.rating, 0) /
+                  merged.length
+                ).toFixed(2),
+              )
+            : updated.rating;
+        return {
+          ...base,
+          ...updated,
+          reviews: merged,
+          reviewCount: Math.max(base.reviewCount, updated.reviewCount, merged.length),
+          rating: fallbackRating,
+        };
+      });
       setReview('');
       toast.success(t('reviews.thankYou'));
     } catch {
@@ -42,6 +139,7 @@ export default function RecommendationDetailPage() {
     setError(false);
     recommendationService
       .byId(id)
+      .then(mergeReviews)
       .then(setRec)
       .catch(() => setError(true));
   }, [id]);
@@ -164,44 +262,80 @@ export default function RecommendationDetailPage() {
             </div>
           </div>
 
-          <div className="mt-6 space-y-4">
-            {rec.reviews?.map((item) => (
-              <article
-                key={item.id}
-                className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 p-4 space-y-2.5"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-bold text-white shadow-xs">
-                      {item.userName[0]?.toUpperCase()}
-                    </span>
-                    <div>
-                      <strong className="block text-sm font-bold text-slate-900 dark:text-white">
-                        {item.userName}
-                      </strong>
-                      <span className="text-[11px] text-slate-400">
-                        {new Date(item.createdAt).toLocaleDateString(
-                          i18n.language === 'en' ? 'en-US' : 'vi-VN',
-                        )}
+          <div
+            className={`mt-6 pr-1 ${canExpand && !showAllReviews ? 'overflow-y-auto pr-2' : ''}`}
+            style={
+              canExpand && !showAllReviews
+                ? { maxHeight: COLLAPSED_HEIGHT, scrollbarWidth: 'thin' }
+                : undefined
+            }
+          >
+            <div className="space-y-4">
+              {visibleReviews.map((item) => (
+                <article
+                  key={item.id}
+                  className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 p-4 space-y-2.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-bold text-white shadow-xs">
+                        {item.userName[0]?.toUpperCase()}
                       </span>
+                      <div>
+                        <strong className="block text-sm font-bold text-slate-900 dark:text-white">
+                          {item.userName}
+                        </strong>
+                        <span className="text-[11px] text-slate-400">
+                          {new Date(item.createdAt).toLocaleDateString(
+                            i18n.language === 'en' ? 'en-US' : 'vi-VN',
+                          )}
+                        </span>
+                      </div>
                     </div>
+                    <span className="text-sm font-bold text-amber-400">
+                      {'★'.repeat(item.rating)}{'☆'.repeat(5 - item.rating)}
+                    </span>
                   </div>
-                  <span className="text-sm font-bold text-amber-400">
-                    {'★'.repeat(item.rating)}{'☆'.repeat(5 - item.rating)}
-                  </span>
-                </div>
-                <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300 font-medium">
-                  {item.content}
-                </p>
-              </article>
-            ))}
+                  <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300 font-medium">
+                    {item.content}
+                  </p>
+                </article>
+              ))}
 
-            {!rec.reviews?.length && (
-              <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-700/80 p-8 text-center text-sm text-slate-400">
-                {t('reviews.empty')}
-              </div>
-            )}
+              {!reviews.length && (
+                <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-700/80 p-8 text-center text-sm text-slate-400">
+                  {t('reviews.empty')}
+                </div>
+              )}
+            </div>
           </div>
+
+          {canExpand && (
+            <div className="mt-5 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setShowAllReviews((value) => !value)}
+                aria-expanded={showAllReviews}
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-5 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-sm transition hover:scale-[1.03] hover:border-blue-400 hover:text-blue-600 dark:hover:text-cyan-300 active:scale-95 cursor-pointer"
+              >
+                {showAllReviews ? (
+                  <>
+                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="18 15 12 9 6 15" />
+                    </svg>
+                    {t('reviews.collapse')}
+                  </>
+                ) : (
+                  <>
+                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                    {t('reviews.showMore', { count: hiddenCount })}
+                  </>
+                )}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Submit Review Card */}
