@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { CreateTripDto } from './dto/trip.dto';
@@ -159,7 +160,7 @@ export class TripsService {
             updatedAt: itin.updatedAt.toISOString(),
           }
         : null,
-      expenses: (trip.expenses ?? []).map((e) => ({
+      expenses: (trip.expenses ?? []).map((e: TripWithRelations['expenses'][number]) => ({
         id: e.id,
         title: e.title,
         category: e.category,
@@ -168,7 +169,7 @@ export class TripsService {
         spentAt: e.spentAt.toISOString(),
         createdAt: e.createdAt.toISOString(),
       })),
-      packingItems: (trip.packingItems ?? []).map((p) => ({
+      packingItems: (trip.packingItems ?? []).map((p: TripWithRelations['packingItems'][number]) => ({
         id: p.id,
         name: p.name,
         category: p.category,
