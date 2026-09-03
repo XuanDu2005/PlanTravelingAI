@@ -14,13 +14,13 @@ const SEED_ACCOUNTS: SeedAccount[] = [
   {
     name: 'Test User',
     email: 'user@travelmind.local',
-    password: 'User@12345',
+    password: 'User@123456',
     role: 'USER',
   },
   {
     name: 'Test Admin',
     email: 'admin@travelmind.local',
-    password: 'Admin@12345',
+    password: 'Admin@123456',
     role: 'ADMIN',
   },
 ];
