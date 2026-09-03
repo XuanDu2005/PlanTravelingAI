@@ -28,8 +28,24 @@ async function bootstrap() {
     .map((o) => o.trim())
     .filter(Boolean);
 
+  // Build a permissive CORS layer:
+  // - use explicit list from env when provided
+  // - otherwise allow any *.vercel.app preview + localhost (dev)
+  const vercelOriginRegex = /^https:\/\/[a-z0-9-]+(\.[a-z0-9-]+)*\.vercel\.app$/i;
+  const isOriginAllowed = (origin: string | undefined): boolean => {
+    if (!origin) return true; // mobile/curl
+    if (origin.startsWith('http://localhost')) return true;
+    if (corsOrigins.length > 0) return corsOrigins.includes(origin);
+    return vercelOriginRegex.test(origin);
+  };
+
   app.enableCors({
-    origin: corsOrigins.length > 0 ? corsOrigins : true,
+    origin: (origin, callback) => {
+      if (isOriginAllowed(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS: origin ${origin} not allowed`));
+    },
     credentials: true,
   });
 
