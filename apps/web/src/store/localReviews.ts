@@ -7,7 +7,7 @@
  * basis. Each user's reviews stay on their own device, which is acceptable
  * given the backend intentionally drops them.
  */
-import { RecommendationReview } from '@/types';
+import type { RecommendationReview } from '@/types/index';
 
 const STORAGE_KEY = 'travelmind.reviews.v2';
 
