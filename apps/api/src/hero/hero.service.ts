@@ -46,21 +46,21 @@ export class HeroService {
   }
 
   create(dto: CreateHeroSlideDto) {
-    return this.prisma.heroSlide.create({ data: dto }).then((row) => {
+    return this.prisma.heroSlide.create({ data: dto }).then((row: Awaited<ReturnType<typeof this.prisma.heroSlide.create>>) => {
       this.invalidateCache();
       return row;
     });
   }
 
   update(id: string, dto: UpdateHeroSlideDto) {
-    return this.prisma.heroSlide.update({ where: { id }, data: dto }).then((row) => {
+    return this.prisma.heroSlide.update({ where: { id }, data: dto }).then((row: Awaited<ReturnType<typeof this.prisma.heroSlide.update>>) => {
       this.invalidateCache();
       return row;
     });
   }
 
   remove(id: string) {
-    return this.prisma.heroSlide.delete({ where: { id } }).then((row) => {
+    return this.prisma.heroSlide.delete({ where: { id } }).then((row: Awaited<ReturnType<typeof this.prisma.heroSlide.delete>>) => {
       this.invalidateCache();
       return row;
     });
@@ -76,7 +76,7 @@ export class HeroService {
       orderBy: { sortOrder: 'asc' },
       select: { id: true, sortOrder: true },
     });
-    const idx = rows.findIndex((r) => r.id === id);
+    const idx = rows.findIndex((r: { id: string }) => r.id === id);
     if (idx === -1) return null;
     const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
     if (swapIdx < 0 || swapIdx >= rows.length) {

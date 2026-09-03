@@ -24,8 +24,8 @@ export class FavoritesService {
     });
 
     // Filter out favorites whose recommendation was deleted (admin removed).
-    const visible = favorites.filter((f) => f.recommendation != null);
-    return visible.map((f) => this.recs.formatSummary(f.recommendation));
+    const visible = favorites.filter((f: { recommendation: unknown }) => f.recommendation != null);
+    return visible.map((f: { recommendation: unknown }) => this.recs.formatSummary(f.recommendation as Parameters<RecommendationsService['formatSummary']>[0]));
   }
 
   /**
@@ -37,7 +37,7 @@ export class FavoritesService {
       where: { userId },
       select: { recommendationId: true },
     });
-    return rows.map((r) => r.recommendationId);
+    return rows.map((r: { recommendationId: string }) => r.recommendationId);
   }
 
   async add(userId: string, recommendationId: string) {

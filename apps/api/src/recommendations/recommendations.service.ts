@@ -15,7 +15,7 @@ export class RecommendationsService {
       where: { isPublished: true },
       orderBy: { createdAt: 'desc' },
     });
-    return recs.map((r) => this.formatSummary(r));
+    return recs.map((r: NonNullable<Awaited<ReturnType<typeof this.prisma.recommendation.findFirst>>>) => this.formatSummary(r));
   }
 
   async getPublic(id: string) {
@@ -48,7 +48,7 @@ export class RecommendationsService {
     const recs = await this.prisma.recommendation.findMany({
       orderBy: { createdAt: 'desc' },
     });
-    return recs.map((r) => this.formatSummary(r));
+    return recs.map((r: NonNullable<Awaited<ReturnType<typeof this.prisma.recommendation.findFirst>>>) => this.formatSummary(r));
   }
 
   async create(dto: CreateRecommendationDto) {

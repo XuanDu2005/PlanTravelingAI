@@ -78,7 +78,7 @@ export class TripsService {
       orderBy: { createdAt: 'desc' },
       include: { itineraries: true, expenses: true, packingItems: true },
     });
-    return trips.map((trip) => this.formatTrip(trip));
+    return trips.map((trip: NonNullable<Awaited<ReturnType<typeof this.prisma.trip.findFirst>>>) => this.formatTrip(trip));
   }
 
   async getById(userId: string, tripId: string) {

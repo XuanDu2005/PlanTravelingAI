@@ -8,7 +8,7 @@ class GenerateItineraryDto {
   @IsDateString() startDate!: string;
   @IsDateString() endDate!: string;
   @IsInt() @Min(1) travelers!: number;
-  @IsString() budget!: string;
+  @IsInt() @Min(0) budget!: number;
   @IsOptional() @IsString() preferences?: string;
 }
 

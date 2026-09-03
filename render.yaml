@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: travelmind-api
+    runtime: node
+    rootDir: apps/api
+    plan: free
+    buildCommand: pnpm install && pnpm run build
+    startCommand: node dist/main.js
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: travelmind-db
+          property: connectionString
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: CORS_ORIGINS
+        value: https://travelmind-git-main-devchualons-projects.vercel.app
+      - key: AI_PROVIDER
+        value: gemini
+      - key: AI_API_KEY
+        sync: false
+      - key: AI_MODEL
+        value: gemini-2.5-flash
+
+databases:
+  - name: travelmind-db
+    plan: free
+    databaseName: travelmind
+    user: travelmind

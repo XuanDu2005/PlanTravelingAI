@@ -62,7 +62,7 @@ export class ChatService {
       ...history
         .slice()
         .reverse()
-        .map((m) => ({
+        .map((m: { role: ChatRole; content: string }) => ({
           role:
             m.role === ChatRole.ASSISTANT
               ? ('assistant' as const)

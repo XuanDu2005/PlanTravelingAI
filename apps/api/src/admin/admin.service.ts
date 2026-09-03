@@ -120,7 +120,7 @@ export class AdminService {
       const d = new Date(now.getFullYear(), now.getMonth() - (5 - idx), 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       const label = `T${d.getMonth() + 1}/${String(d.getFullYear()).slice(-2)}`;
-      const count = tripsRows.filter((row) => {
+      const count = tripsRows.filter((row: { createdAt: Date }) => {
         const rd = row.createdAt;
         return (
           rd.getFullYear() === d.getFullYear() && rd.getMonth() === d.getMonth()
@@ -139,21 +139,21 @@ export class AdminService {
         lockedUsers,
       },
       monthlyTrips,
-      recsByCategory: recCategories.map((c) => ({
+      recsByCategory: recCategories.map((c: { category: string; _count: { _all: number } }) => ({
         category: c.category,
         count: c._count._all,
       })),
-      topTripDestinations: topTripDestinations.map((d) => ({
+      topTripDestinations: topTripDestinations.map((d: { destination: string; _count: { _all: number } }) => ({
         destination: d.destination,
         count: d._count._all,
       })),
-      recentTrips: recentTrips.map((t) => ({
+      recentTrips: recentTrips.map((t: { id: string; destination: string; createdAt: Date; user: { id: string; name: string; email: string } }) => ({
         id: t.id,
         destination: t.destination,
         createdAt: t.createdAt.toISOString(),
         user: t.user,
       })),
-      recentSignups: recentUsers.map((u) => ({
+      recentSignups: recentUsers.map((u: { id: string; name: string; email: string; createdAt: Date }) => ({
         id: u.id,
         name: u.name,
         email: u.email,
