@@ -11,6 +11,11 @@ import { UpdateItineraryDto } from './dto/workspace.dto';
 import type { TripItineraryInput } from '../ai/ai.types';
 import { NotificationsService } from '../notifications/notifications.service';
 
+/** Type của Trip khi include itineraries/expenses/packingItems (dùng cho formatTrip). */
+type TripWithRelations = Prisma.TripGetPayload<{
+  include: { itineraries: true; expenses: true; packingItems: true };
+}>;
+
 @Injectable()
 export class TripsService {
   constructor(
@@ -78,7 +83,7 @@ export class TripsService {
       orderBy: { createdAt: 'desc' },
       include: { itineraries: true, expenses: true, packingItems: true },
     });
-    return trips.map((trip: NonNullable<Awaited<ReturnType<typeof this.prisma.trip.findFirst>>>) => this.formatTrip(trip));
+    return trips.map((trip: TripWithRelations) => this.formatTrip(trip));
   }
 
   async getById(userId: string, tripId: string) {
@@ -92,7 +97,7 @@ export class TripsService {
     });
     if (!trip) throw new NotFoundException('Trip not found');
     if (trip.userId !== userId) throw new ForbiddenException('Not allowed');
-    return this.formatTrip(trip);
+    return this.formatTrip(trip as TripWithRelations);
   }
 
   async updateItinerary(userId: string, tripId: string, dto: UpdateItineraryDto) {
@@ -129,44 +134,7 @@ export class TripsService {
     return { id: tripId, deleted: true };
   }
 
-  private formatTrip(trip: {
-    id: string;
-    userId: string;
-    destination: string;
-    startDate: Date;
-    endDate: Date;
-    travelers: number;
-    budget: number;
-    preferences: string;
-    status: string;
-    createdAt: Date;
-    updatedAt: Date;
-    itineraries: Array<{
-      id: string;
-      title: string;
-      description: string;
-      content: string;
-      createdAt: Date;
-      updatedAt: Date;
-    }>;
-    expenses?: Array<{
-      id: string;
-      title: string;
-      category: string;
-      amount: number;
-      paidBy: string;
-      spentAt: Date;
-      createdAt: Date;
-    }>;
-    packingItems?: Array<{
-      id: string;
-      name: string;
-      category: string;
-      quantity: number;
-      isPacked: boolean;
-      createdAt: Date;
-    }>;
-  }) {
+  private formatTrip(trip: TripWithRelations) {
     const itin = trip.itineraries[0];
     const parsedContent: unknown = itin ? safeParse(itin.content) : null;
     return {
