@@ -64,7 +64,7 @@ export class TripsService {
           },
         },
       },
-      include: { itineraries: true },
+      include: { itineraries: true, expenses: true, packingItems: true },
     });
 
     await this.notifications.create({
@@ -75,7 +75,7 @@ export class TripsService {
       link: `/trips/${trip.id}`,
     });
 
-    return this.formatTrip(trip);
+    return this.formatTrip(trip as TripWithRelations);
   }
 
   async listByUser(userId: string) {
