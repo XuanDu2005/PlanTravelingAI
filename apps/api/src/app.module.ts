@@ -12,6 +12,7 @@ import { FavoritesModule } from './favorites/favorites.module';
 import { HeroModule } from './hero/hero.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { WeatherModule } from './weather/weather.module';
+import { SeedModule } from './seed/seed.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -32,6 +33,7 @@ import { HealthController } from './health.controller';
     HeroModule,
     NotificationsModule,
     WeatherModule,
+    SeedModule,
   ],
   controllers: [HealthController],
 })
